@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dev-dist/
+
+# Environment variables (SENSITIVE - never commit)
+.env
+.env.local
+.env.*.local
+
+# Editor & OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
+
+# Sensitive files
+clavebasededatos.txt
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temp files
+npx
+test.js
