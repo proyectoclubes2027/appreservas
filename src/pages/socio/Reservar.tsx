@@ -56,7 +56,12 @@ export default function Reservar() {
   };
 
   const fetchSocios = async () => {
-    const { data } = await supabase.from('socios').select('dni, nombre, apellido').eq('activo', true).order('apellido', { ascending: true });
+    const { data } = await supabase
+      .from('socios')
+      .select('dni, nombre, apellido')
+      .eq('activo', true)
+      .eq('estado', 'activo')
+      .order('apellido', { ascending: true });
     if (data) setSociosList(data);
   };
 
