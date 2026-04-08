@@ -7,6 +7,7 @@ export default function SociosAdmin() {
   const [socios, setSocios] = useState<any[]>([]);
   const [loadingLocal, setLoadingLocal] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'todos' | 'activos' | 'inactivos'>('todos');
 
   const exportToCSV = () => {
     const headers = ['DNI', 'Apellido', 'Nombre', 'Email', 'Rol', 'Activo'];
@@ -84,11 +85,15 @@ export default function SociosAdmin() {
     fetchSocios();
   };
 
-  const filteredSocios = socios.filter(s => 
-    `${s.nombre} ${s.apellido}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.dni.includes(searchTerm) ||
-    (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredSocios = socios.filter(s => {
+    const matchesSearch = `${s.nombre} ${s.apellido}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.dni.includes(searchTerm) ||
+      (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+    if (filterStatus === 'activos') return matchesSearch && s.activo;
+    if (filterStatus === 'inactivos') return matchesSearch && !s.activo;
+    return matchesSearch;
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -110,6 +115,15 @@ export default function SociosAdmin() {
             onChange={e => setSearchTerm(e.target.value)}
             className="flex-1"
           />
+          <select 
+            className="bg-[#0d0d0d] border border-border rounded-md px-3 text-sm text-textPri outline-none focus:border-primary shrink-0"
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value as 'todos' | 'activos' | 'inactivos')}
+          >
+            <option value="todos">Mostrar: Todos</option>
+            <option value="activos">Mostrar: Activos</option>
+            <option value="inactivos">Mostrar: Inactivos</option>
+          </select>
         </div>
 
         <div className="flex flex-col gap-2">

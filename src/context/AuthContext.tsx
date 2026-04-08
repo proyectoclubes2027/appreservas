@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 
@@ -31,6 +31,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [socio, setSocio] = useState<Socio | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const socioRef = useRef<Socio | null>(null);
+
+  useEffect(() => {
+    socioRef.current = socio;
+  }, [socio]);
+
   useEffect(() => {
     setLoading(true);
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -49,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        if (!socio || event === 'SIGNED_IN') {
+        if (!socioRef.current || event === 'SIGNED_IN') {
           setLoading(true);
           fetchSocioProfile(session.user);
         }
