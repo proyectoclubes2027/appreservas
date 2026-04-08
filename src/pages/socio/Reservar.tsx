@@ -26,6 +26,8 @@ export default function Reservar() {
   const [comp2, setComp2] = useState<string>('');
   const [comp3, setComp3] = useState<string>('');
   const [reservingLocal, setReservingLocal] = useState(false);
+  const [isMoroso, setIsMoroso] = useState(false);
+  const [mesesDeuda, setMesesDeuda] = useState(0);
   
   // State for shift details modal
   const [infoTurno, setInfoTurno] = useState<any>(null);
@@ -35,7 +37,7 @@ export default function Reservar() {
   useEffect(() => {
     const initPage = async () => {
       setLoadingLocal(true);
-      await Promise.all([fetchTurnos(), fetchSocios(), fetchCanchas()]);
+      await Promise.all([fetchTurnos(), fetchSocios(), fetchCanchas(), checkDebtStatus()]);
       setLoadingLocal(false);
     };
     initPage();
@@ -61,8 +63,67 @@ export default function Reservar() {
   const fetchCanchas = async () => {
     const { data } = await supabase.from('canchas').select('*').order('id', { ascending: true });
     if (data) {
-      // Ocultamos la cancha 3 temporalmente
       setCanchasList(data.filter(c => c.id !== 3));
+    }
+  };
+
+  const checkDebtStatus = async () => {
+    if (!socio) return;
+    
+    try {
+      // 1. Obtener pagos del socio
+      const { data: pagos } = await supabase
+        .from('pago_cuotas')
+        .select('mes_pagado')
+        .eq('socio_id', socio.id);
+
+      const mesesPagados = pagos?.map(p => p.mes_pagado) || [];
+      
+      // 2. Determinar punto de inicio (ultimo pago o fecha de alta)
+      const ahora = new Date();
+      let mesInicio: Date;
+
+      if (mesesPagados.length > 0) {
+        // Obtenemos el mes más reciente pagado
+        const maxMes = mesesPagados.reduce((max, current) => current > max ? current : max);
+        mesInicio = new Date(maxMes + "-01");
+      } else {
+        // Si no hay pagos, usamos la fecha de alta
+        mesInicio = new Date(socio.created_at);
+      }
+
+      // 3. Calcular diferencia de meses
+      const diffAnios = ahora.getFullYear() - mesInicio.getFullYear();
+      const diffMeses = (ahora.getMonth() - mesInicio.getMonth()) + (diffAnios * 12);
+
+      if (diffMeses >= 2) {
+        setIsMoroso(true);
+        setMesesDeuda(diffMeses);
+      }
+    } catch (err) {
+      console.error("Error al verificar deuda:", err);
+    }
+  };
+
+  const handlePayDebt = async () => {
+    if (!socio) return;
+    setLoadingLocal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-mp-preference', {
+        body: { 
+          socio_dni: socio.dni, 
+          nombre: `${socio.nombre} ${socio.apellido}`,
+          monto: 8000 * mesesDeuda, // Simulamos el monto total
+        }
+      });
+      if (error) throw error;
+      if (data.init_point) {
+        window.open(data.init_point, '_blank');
+      }
+    } catch (err: any) {
+      alert("Error al generar el link de pago: " + (err.message || "Error desconocido"));
+    } finally {
+      setLoadingLocal(false);
     }
   };
 
@@ -103,6 +164,10 @@ export default function Reservar() {
 
   const confirmReservation = async () => {
     if (!socio) return;
+    if (isMoroso) {
+      alert(`No puedes reservar: Posees una deuda de ${mesesDeuda} meses. Por favor, regulariza tu situación.`);
+      return;
+    }
     setReservingLocal(true);
     
     // Determine the list of DNIS involved
@@ -310,6 +375,17 @@ export default function Reservar() {
             {canchasList.map(cancha => (
               <div key={cancha.id}>
                 <h3 className="text-lg font-bold text-textPri mb-4 border-b border-[#2a2a2a] pb-2">{cancha.nombre}</h3>
+                {isMoroso && (
+                  <div className="bg-red-900/40 border border-red-500/50 text-red-200 p-4 rounded-xl mb-6 flex flex-col gap-4">
+                    <div className="flex flex-col gap-2">
+                      <p className="font-bold text-sm">⚠️ ACCESO RESTRINGIDO POR MOROSIDAD</p>
+                      <p className="text-xs opacity-90">Detectamos que tienes {mesesDeuda} meses pendientes de pago. Por favor regulariza tu situación para habilitar las reservas.</p>
+                    </div>
+                    <Button variant="primary" fullWidth onClick={handlePayDebt} disabled={loadingLocal}>
+                       Pagar Deuda Online (Mercado Pago)
+                    </Button>
+                  </div>
+                )}
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                   {SHIFTS.map(shift => renderBotonCancha(shift, cancha.id))}
                 </div>

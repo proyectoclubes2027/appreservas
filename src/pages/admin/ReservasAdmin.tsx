@@ -85,13 +85,36 @@ export default function ReservasAdmin() {
     setTipoBloqueo('mantenimiento');
   };
 
-  const unlockOrCancel = async (id: string) => {
-    if (!confirm('¿Seguro que deseas eliminar esta reserva/bloqueo?')) return;
-    const { error } = await supabase.from('turnos').delete().eq('id', id);
+  const unlockOrCancel = async (turno: any) => {
+    const isOcupado = turno.estado === 'ocupado';
+    const message = isOcupado 
+      ? '¿Seguro que deseas CANCELAR la reserva del socio? Se le enviará una notificación automática.' 
+      : '¿Seguro que deseas eliminar este bloqueo?';
+      
+    if (!confirm(message)) return;
+    
+    setLoadingLocal(true);
+    const { error } = await supabase.from('turnos').delete().eq('id', turno.id);
+    
     if (!error) {
+       // Si estaba ocupado, notificamos al socio
+       if (isOcupado && turno.socio_dni) {
+         supabase.functions.invoke('notify-cancellation', {
+           body: { 
+             socio_dni: turno.socio_dni,
+             fecha: format(new Date(turno.fecha), 'dd/MM/yyyy'),
+             hora: turno.hora_inicio.substring(0, 5),
+             motivo: 'Cancelación por administración / Clima'
+           }
+         }).catch(err => console.error("Error al notificar cancelación", err));
+       }
+
        fetchTurnos();
        setInfoTurno(null);
-    } else alert("Error: " + error.message);
+    } else {
+      alert("Error: " + error.message);
+    }
+    setLoadingLocal(false);
   };
 
   const renderBotonCancha = (shift: any, canchaId: number) => {

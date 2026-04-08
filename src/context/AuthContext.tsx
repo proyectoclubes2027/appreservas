@@ -9,6 +9,7 @@ type Socio = {
   apellido: string;
   rol: 'socio' | 'admin';
   activo: boolean;
+  created_at: string;
 };
 
 interface AuthContextType {

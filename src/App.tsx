@@ -5,9 +5,11 @@ import { Layout } from './components/Layout';
 import { initOneSignal, loginOneSignal } from './lib/onesignal';
 
 import Login from './pages/Login';
+import ActivateAccount from './pages/ActivateAccount';
 import Reservar from './pages/socio/Reservar';
 import MisTurnos from './pages/socio/MisTurnos';
 import Agenda from './pages/socio/Agenda';
+import PagoExitoso from './pages/socio/PagoExitoso';
 import ReservasAdmin from './pages/admin/ReservasAdmin';
 import SociosAdmin from './pages/admin/SociosAdmin';
 import ReportesAdmin from './pages/admin/ReportesAdmin';
@@ -44,6 +46,7 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<Navigate to={socio ? (socio.rol === 'admin' ? '/admin/reservas' : '/reservar') : '/login'} replace />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/activar" element={<ActivateAccount />} />
       
       {/* Socio Routes */}
       <Route path="/reservar" element={
@@ -54,6 +57,9 @@ const AppRoutes = () => {
       } />
       <Route path="/agenda" element={
         <ProtectedRoute requiredRole="socio"><Layout><Agenda /></Layout></ProtectedRoute>
+      } />
+      <Route path="/pago-exitoso" element={
+        <ProtectedRoute requiredRole="socio"><Layout><PagoExitoso /></Layout></ProtectedRoute>
       } />
 
       {/* Admin Routes */}

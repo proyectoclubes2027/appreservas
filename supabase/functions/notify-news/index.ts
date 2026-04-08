@@ -14,13 +14,6 @@ serve(async (req) => {
   try {
     const { noticia_id } = await req.json()
 
-    if (!noticia_id) {
-      return new Response(JSON.stringify({ error: 'Falta noticia_id' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      })
-    }
-
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -33,31 +26,22 @@ serve(async (req) => {
       .eq('id', noticia_id)
       .single()
 
-    if (noticiaError || !noticia) {
-      throw noticiaError || new Error('Noticia no encontrada')
-    }
+    if (noticiaError || !noticia) throw new Error('Noticia no encontrada')
 
-    // 2. Enviar notificación Push vía OneSignal (Broadcast a todos)
+    // 2. Credenciales
     const ONESIGNAL_APP_ID = Deno.env.get('ONESIGNAL_APP_ID')
     const ONESIGNAL_REST_API_KEY = Deno.env.get('ONESIGNAL_REST_API_KEY')
 
-    if (!ONESIGNAL_APP_ID || !ONESIGNAL_REST_API_KEY) {
-      throw new Error('Faltan credenciales de OneSignal en las variables de entorno.')
-    }
-
+    // 3. Enviar Push masivo (Broadcast)
     const notificationBody = {
       app_id: ONESIGNAL_APP_ID,
       included_segments: ['All'],
-      headings: { en: '¡Nuevo Comunicado! 📢', es: '¡Nuevo Comunicado! 📢' },
-      contents: {
-        en: noticia.titulo,
-        es: noticia.titulo
-      },
-      // Redirigir a la app cuando la abran
-      url: 'https://caectenis.netlify.app' // Cambia segun el dominio real
+      headings: { es: '📢 Nuevo Comunicado - CAEC' },
+      contents: { es: noticia.titulo },
+      url: 'https://caectenis.netlify.app' // Redirige a la app
     }
 
-    const onesignalRes = await fetch('https://onesignal.com/api/v1/notifications', {
+    const res = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,19 +50,12 @@ serve(async (req) => {
       body: JSON.stringify(notificationBody),
     })
 
-    const onesignalData = await onesignalRes.json()
-
-    if (!onesignalRes.ok) {
-      throw new Error(`OneSignal error ${onesignalRes.status}: ${JSON.stringify(onesignalData)}`)
-    }
-
-    return new Response(JSON.stringify({ success: true, onesignalData }), {
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
 
   } catch (error: any) {
-    console.error('[notify-news] Error:', error.message)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
