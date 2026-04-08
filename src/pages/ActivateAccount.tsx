@@ -37,6 +37,7 @@ export default function ActivateAccount() {
         .from('socios')
         .select('id, nombre, apellido, dni')
         .or(`nombre.ilike.%${searchTerm}%,apellido.ilike.%${searchTerm}%`)
+        .eq('activo', true)
         .filter('email', 'ilike', '%@caec.com%')
         .limit(5);
 

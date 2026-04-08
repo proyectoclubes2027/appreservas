@@ -45,12 +45,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        setLoading(true); // <--- Fix "pantalla negra" by blocking renders while fetching socio
-        fetchSocioProfile(session.user);
+        if (!socio || event === 'SIGNED_IN') {
+          setLoading(true);
+          fetchSocioProfile(session.user);
+        }
       } else {
         setSocio(null);
         setLoading(false);
