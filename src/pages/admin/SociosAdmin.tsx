@@ -74,11 +74,6 @@ export default function SociosAdmin() {
     setIsModalOpen(true);
   };
 
-  const openCreate = () => {
-    setFormData({ dni: '', nombre: '', apellido: '', email: '', rol: 'socio', activo: true });
-    setEditingId(null);
-    setIsModalOpen(true);
-  };
 
   const toggleActivo = async (id: string, current: boolean) => {
     await supabase.from('socios').update({ activo: !current }).eq('id', id);
