@@ -4,10 +4,12 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const [dni, setDni] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loadingLocal, setLoadingLocal] = useState(false);
 
@@ -135,14 +137,23 @@ export default function Login() {
             type="text"
             inputMode="text"
           />
-          <Input
-            label="Contraseña"
-            placeholder="Últimos 4 dígitos del DNI (o 1234)"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div className="relative">
+            <Input
+              label="Contraseña"
+              placeholder="Últimos 4 dígitos del DNI (o 1234)"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-[38px] text-[#555] hover:text-primary transition-colors"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
 
           {error && <p className="text-blocked text-sm text-center">{error}</p>}
 
