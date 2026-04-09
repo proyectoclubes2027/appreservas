@@ -16,6 +16,13 @@ export default function Login() {
 
   // Si ya hay usuario logueado, redirigí a la raíz para que App.tsx decida
   useEffect(() => {
+    // Verificar si venimos rebotados por inactividad
+    const authError = sessionStorage.getItem('auth_error');
+    if (authError === 'inactive') {
+      setError('Usuario inactivo. Comunicarse con la Sub Comisión de Tenis.');
+      sessionStorage.removeItem('auth_error');
+    }
+
     if (user) {
       navigate('/', { replace: true });
     }

@@ -89,6 +89,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const socioData = data as Socio;
       // Validar que el socio realmente esté ACTIVO antes de dejarlo pasar
       if (socioData.activo === false || socioData.estado === 'inactivo') {
+         console.warn("Acceso denegado: Socio inactivo", socioData.dni);
+         sessionStorage.setItem('auth_error', 'inactive');
          await supabase.auth.signOut();
          setSocio(null);
          setLoading(false);
@@ -105,21 +107,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const mesesPagados = pagos?.map(p => p.mes_pagado) || [];
         const ahora = new Date();
         
-        // Determinamos el último mes pagado
+        // Determinamos el mes de inicio de deuda
         let mesInicio: Date;
         if (mesesPagados.length > 0) {
+          // Si tiene pagos, el mes de inicio de deuda es el mes posterior al último pago
           const maxMes = mesesPagados.reduce((max, current) => current > max ? current : max);
-          mesInicio = new Date(maxMes + "-01");
+          const [anio, mes] = maxMes.split("-").map(Number);
+          // Creamos una fecha en el mes siguiente al último pago
+          mesInicio = new Date(anio, mes, 1); // mes ya es 1-indexed en split, pero Date usa 0-indexed para el segundo arg. 
+          // Si maxMes es '2024-03', split da [2024, 3]. new Date(2024, 3, 1) es 1 Abril 2024. Correcto.
         } else {
-          mesInicio = new Date(socioData.created_at);
+          // Si no tiene pagos, usamos fecha de alta o creación
+          const fechaRef = (socioData as any).fecha_alta || socioData.created_at;
+          mesInicio = new Date(fechaRef);
         }
 
         const diffAnios = ahora.getFullYear() - mesInicio.getFullYear();
         const diffMeses = (ahora.getMonth() - mesInicio.getMonth()) + (diffAnios * 12);
 
+        console.log(`Validación Morosidad [${socioData.dni}]: mesInicio=${mesInicio.toISOString()}, mesesDeuda=${diffMeses}`);
+
         // Inyectamos el estado de morosidad en el objeto socio
         (socioData as any).isMoroso = diffMeses >= 2;
-        (socioData as any).mesesDeuda = diffMeses;
+        (socioData as any).mesesDeuda = Math.max(0, diffMeses);
       } catch (debtErr) {
         console.error("Error al verificar deuda en AuthContext:", debtErr);
       }
