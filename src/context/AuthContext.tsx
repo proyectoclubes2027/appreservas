@@ -83,15 +83,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .single();
 
     if (!error && data) {
-      setSocio(data as Socio);
+      const socioData = data as Socio;
+      // Validar que el socio realmente esté ACTIVO antes de dejarlo pasar
+      if (socioData.activo === false || socioData.estado === 'inactivo') {
+         await supabase.auth.signOut();
+         setSocio(null);
+         setLoading(false);
+         // Podríamos tirar un evento global, pero se redirige al login.
+         return;
+      }
+      setSocio(socioData);
       setLoading(false);
     } else {
-      // El usuario existe en Auth pero NO en la tabla socios.
+      // El usuario existe en Auth pero NO en la tabla socios, o no se encontró
       // Sign out inmediato para no permitir el ingreso.
       await supabase.auth.signOut();
       setSocio(null);
       setLoading(false);
-      // Podríamos disparar un evento global o solo dejarlo en la pantalla de login.
     }
   };
 

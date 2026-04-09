@@ -9,6 +9,7 @@ export const NotificationBanner = () => {
   useEffect(() => {
     // Solo mostramos el banner si el navegador soporta notificaciones Y aún no dio permiso
     const check = async () => {
+      if (localStorage.getItem('hide_notification_banner') === 'true') return;
       if (!isPushNotificationsSupported()) return;
       
       const granted = await getNotificationPermission();
@@ -58,6 +59,16 @@ export const NotificationBanner = () => {
         <p className="text-sm font-bold text-textPri">Activar notificaciones</p>
         <p className="text-xs text-textSec mt-0.5">Te avisamos cuando se libere un turno</p>
       </div>
+      <button 
+        onClick={() => {
+          localStorage.setItem('hide_notification_banner', 'true');
+          setShow(false);
+        }}
+        className="p-1 text-textSec hover:text-textPri transition-colors"
+        title="Ocultar"
+      >
+        ✕
+      </button>
       <button
         onClick={handleActivate}
         disabled={requesting}

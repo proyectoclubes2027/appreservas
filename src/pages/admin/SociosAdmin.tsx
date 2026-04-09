@@ -103,7 +103,6 @@ export default function SociosAdmin() {
           <Button variant="secondary" className="text-xs px-3 py-2" onClick={exportToCSV}>
             📥 Exportar CSV
           </Button>
-          <Button variant="primary" className="text-xs px-3 py-2" onClick={openCreate}>+ Nuevo Socio</Button>
         </div>
       </div>
 

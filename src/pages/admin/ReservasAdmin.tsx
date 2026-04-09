@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { format, addDays, startOfDay } from 'date-fns';
+import { useAuth } from '../../context/AuthContext';
 import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
 import { SHIFTS } from '../../lib/constants';
 
 export default function ReservasAdmin() {
+  const { socio } = useAuth();
   const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
   const [turnosData, setTurnosData] = useState<any[]>([]);
   const [canchasList, setCanchasList] = useState<any[]>([]);
@@ -71,7 +73,8 @@ export default function ReservasAdmin() {
             hora_inicio: selectedShift.start,
             hora_fin: selectedShift.end,
             estado: 'bloqueado',
-            motivo_bloqueo: motivoBloqueo || (tipoBloqueo === 'clases' ? 'Clases' : 'Mantenimiento')
+            motivo_bloqueo: motivoBloqueo || (tipoBloqueo === 'clases' ? 'Clases' : 'Mantenimiento'),
+            socio_dni: socio?.dni
         });
     }
 

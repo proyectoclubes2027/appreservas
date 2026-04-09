@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, User, LogOut, Users, BarChart, Bell } from 'lucide-react';
 import { NotificationBanner } from './NotificationBanner';
 import { NewsPopup } from './NewsPopup';
+import { PwaPrompt } from './PwaPrompt';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { socio, signOut } = useAuth();
@@ -36,6 +37,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Banner de notificaciones — solo para socios */}
       {isSocio && <NotificationBanner />}
+
+      {/* PWA Install Prompt globally visible */}
+      <PwaPrompt />
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20 p-4">

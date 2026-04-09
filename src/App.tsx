@@ -5,7 +5,6 @@ import { Layout } from './components/Layout';
 import { initOneSignal, loginOneSignal } from './lib/onesignal';
 
 import Login from './pages/Login';
-import ActivateAccount from './pages/ActivateAccount';
 import Reservar from './pages/socio/Reservar';
 import MisTurnos from './pages/socio/MisTurnos';
 import Agenda from './pages/socio/Agenda';
@@ -46,7 +45,6 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<Navigate to={socio ? (socio.rol === 'admin' ? '/admin/reservas' : '/reservar') : '/login'} replace />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/activar" element={<ActivateAccount />} />
       
       {/* Socio Routes */}
       <Route path="/reservar" element={

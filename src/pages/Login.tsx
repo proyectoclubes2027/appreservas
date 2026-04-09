@@ -108,11 +108,9 @@ export default function Login() {
             {loadingLocal ? 'Ingresando...' : 'Ingresar'}
           </Button>
 
-          <Button variant="ghost" fullWidth onClick={() => navigate('/activar')} type="button">
-            Soy socio nuevo / Activar mi cuenta
-          </Button>
 
-          <p className="text-center text-xs text-textSec mt-2">
+
+          <p className="text-center text-xs text-textSec mt-4">
             Tu contraseña son los últimos<br /> 4 dígitos de tu DNI
           </p>
         </form>
