@@ -78,7 +78,7 @@ export default function Reservar() {
         body: { 
           socio_dni: socio.dni, 
           nombre: `${socio.nombre} ${socio.apellido}`,
-          monto: 8000 * socio.mesesDeuda, // Simulamos el monto total
+          monto: 8000 * (socio.mesesDeuda || 0), // Simulamos el monto total
         }
       });
       if (error) throw error;
@@ -137,7 +137,7 @@ export default function Reservar() {
 
   const confirmReservation = async () => {
     if (!socio) return;
-    if (socio.isMoroso) {
+    if (socio?.isMoroso) {
       alert(`No puedes reservar: Posees una deuda de ${socio.mesesDeuda} meses. Por favor, regulariza tu situación.`);
       return;
     }
@@ -354,7 +354,7 @@ export default function Reservar() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blocked/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
                 <div className="flex flex-col gap-1 relative z-10">
                   <p className="font-black tracking-wide text-sm text-blocked uppercase">⚠️ Bloqueo por Morosidad</p>
-                  <p className="text-sm font-medium">Se registran {socio.mesesDeuda} meses impagos. Por favor regulariza tu situación.</p>
+                  <p className="text-sm font-medium">Se registran {socio?.mesesDeuda} meses impagos. Por favor regulariza tu situación.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 relative z-10">
                   <Button variant="primary" className="flex-1 font-bold shadow-lg shadow-primary/20" onClick={handlePayDebt} disabled={loadingLocal}>

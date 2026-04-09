@@ -104,7 +104,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const mesesPagados = pagos?.map(p => p.mes_pagado) || [];
         const ahora = new Date();
-        const mesActual = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, "0")}`;
         
         // Determinamos el último mes pagado
         let mesInicio: Date;
