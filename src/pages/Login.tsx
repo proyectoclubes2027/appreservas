@@ -37,6 +37,22 @@ export default function Login() {
     setLoadingLocal(true);
 
     try {
+      // 1. Verificar primero si el socio existe y está activo
+      const { data: socioCheck, error: checkError } = await supabase
+        .from('socios')
+        .select('activo, estado')
+        .eq('dni', cleanDni)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is 'no rows'
+        throw new Error('Error al verificar socio: ' + checkError.message);
+      }
+
+      if (socioCheck && (socioCheck.activo === false || socioCheck.estado === 'inactivo')) {
+        setError('Usuario inactivo. Comunicarse con la Sub Comisión de Tenis.');
+        return;
+      }
+
       const email = `${cleanDni}@empalmecentral.com`;
       const authPassword = `${cleanDni}${cleanPassword}`;
 
@@ -47,6 +63,12 @@ export default function Login() {
 
       if (signInError) {
         if (signInError.message.includes('Invalid login credentials')) {
+          // Si no existe el usuario en Auth, intentamos registrarlo (solo si existe en socios y es activo)
+          if (!socioCheck) {
+            setError('No se encontró un socio con ese DNI. Verifica los datos.');
+            return;
+          }
+
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ 
             email, 
             password: authPassword 
@@ -55,34 +77,14 @@ export default function Login() {
           if (signUpError) {
             setError('Error al crear perfil en Auth: ' + signUpError.message);
           } else if (signUpData?.user && !signUpData.session) {
-            setError('⚠️ Error: Tienes activada la opción "Confirm email" en Supabase. Ve a Authentication > Providers > Email en Supabase y DESACTÍVALA para que los socios puedan entrar directo sin validar el correo real.');
-          } else {
-            // Check socio status after signup
-            const { data: socioData } = await supabase.from('socios').select('activo, estado').eq('dni', cleanDni).single();
-            if (socioData && (socioData.activo === false || socioData.estado === 'inactivo')) {
-               await supabase.auth.signOut();
-               setError('Usuario inactivo. Comunicarse con la Sub Comision de Tenis');
-            } else {
-               setTimeout(() => {
-                   const checkSession = async () => {
-                       const { data } = await supabase.auth.getSession();
-                       if (!data.session) setError('Error al iniciar sesión tras el registro.');
-                   };
-                   checkSession();
-               }, 1000);
-            }
+            setError('⚠️ Error de configuración: "Confirm email" está activado en Supabase.');
           }
+          // Si el registro es exitoso, AuthContext tomará el relevo
         } else {
           setError(signInError.message);
         }
-      } else {
-        // Successful login, check if active
-        const { data: socioData } = await supabase.from('socios').select('activo, estado').eq('dni', cleanDni).single();
-        if (socioData && (socioData.activo === false || socioData.estado === 'inactivo')) {
-           await supabase.auth.signOut();
-           setError('Usuario inactivo. Comunicarse con la Sub Comision de Tenis');
-        }
-      }
+      } 
+      // Si el login es exitoso, el useEffect de Login.tsx o el AuthContext redirigirán al usuario.
     } catch (err: any) {
       setError(err.message || 'Error desconocido');
     } finally {

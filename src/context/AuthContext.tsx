@@ -11,6 +11,8 @@ type Socio = {
   activo: boolean;
   estado?: string;
   created_at: string;
+  isMoroso?: boolean;
+  mesesDeuda?: number;
 };
 
 interface AuthContextType {
@@ -90,14 +92,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
          await supabase.auth.signOut();
          setSocio(null);
          setLoading(false);
-         // Podríamos tirar un evento global, pero se redirige al login.
          return;
       }
+
+      // NUEVO: Verificar deuda (Moroso)
+      try {
+        const { data: pagos } = await supabase
+          .from('pago_cuotas')
+          .select('mes_pagado')
+          .eq('socio_id', socioData.id);
+
+        const mesesPagados = pagos?.map(p => p.mes_pagado) || [];
+        const ahora = new Date();
+        const mesActual = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, "0")}`;
+        
+        // Determinamos el último mes pagado
+        let mesInicio: Date;
+        if (mesesPagados.length > 0) {
+          const maxMes = mesesPagados.reduce((max, current) => current > max ? current : max);
+          mesInicio = new Date(maxMes + "-01");
+        } else {
+          mesInicio = new Date(socioData.created_at);
+        }
+
+        const diffAnios = ahora.getFullYear() - mesInicio.getFullYear();
+        const diffMeses = (ahora.getMonth() - mesInicio.getMonth()) + (diffAnios * 12);
+
+        // Inyectamos el estado de morosidad en el objeto socio
+        (socioData as any).isMoroso = diffMeses >= 2;
+        (socioData as any).mesesDeuda = diffMeses;
+      } catch (debtErr) {
+        console.error("Error al verificar deuda en AuthContext:", debtErr);
+      }
+
       setSocio(socioData);
       setLoading(false);
     } else {
-      // El usuario existe en Auth pero NO en la tabla socios, o no se encontró
-      // Sign out inmediato para no permitir el ingreso.
       await supabase.auth.signOut();
       setSocio(null);
       setLoading(false);

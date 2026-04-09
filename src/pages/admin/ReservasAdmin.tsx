@@ -78,7 +78,7 @@ export default function ReservasAdmin() {
         });
     }
 
-    const { error } = await supabase.from('turnos').insert(inserts);
+    const { error } = await supabase.from('turnos').upsert(inserts, { onConflict: 'cancha_id,fecha,hora_inicio' });
 
     if (error) alert("Error: " + error.message);
     else fetchTurnos();

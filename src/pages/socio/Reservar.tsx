@@ -26,8 +26,6 @@ export default function Reservar() {
   const [comp2, setComp2] = useState<string>('');
   const [comp3, setComp3] = useState<string>('');
   const [reservingLocal, setReservingLocal] = useState(false);
-  const [isMoroso, setIsMoroso] = useState(false);
-  const [mesesDeuda, setMesesDeuda] = useState(0);
   
   // State for shift details modal
   const [infoTurno, setInfoTurno] = useState<any>(null);
@@ -37,7 +35,7 @@ export default function Reservar() {
   useEffect(() => {
     const initPage = async () => {
       setLoadingLocal(true);
-      await Promise.all([fetchTurnos(), fetchSocios(), fetchCanchas(), checkDebtStatus()]);
+      await Promise.all([fetchTurnos(), fetchSocios(), fetchCanchas()]);
       setLoadingLocal(false);
     };
     initPage();
@@ -72,53 +70,15 @@ export default function Reservar() {
     }
   };
 
-  const checkDebtStatus = async () => {
-    if (!socio) return;
-    
-    try {
-      // 1. Obtener pagos del socio
-      const { data: pagos } = await supabase
-        .from('pago_cuotas')
-        .select('mes_pagado')
-        .eq('socio_id', socio.id);
-
-      const mesesPagados = pagos?.map(p => p.mes_pagado) || [];
-      
-      // 2. Determinar punto de inicio (ultimo pago o fecha de alta)
-      const ahora = new Date();
-      let mesInicio: Date;
-
-      if (mesesPagados.length > 0) {
-        // Obtenemos el mes más reciente pagado
-        const maxMes = mesesPagados.reduce((max, current) => current > max ? current : max);
-        mesInicio = new Date(maxMes + "-01");
-      } else {
-        // Si no hay pagos, usamos la fecha de alta
-        mesInicio = new Date(socio.created_at);
-      }
-
-      // 3. Calcular diferencia de meses
-      const diffAnios = ahora.getFullYear() - mesInicio.getFullYear();
-      const diffMeses = (ahora.getMonth() - mesInicio.getMonth()) + (diffAnios * 12);
-
-      if (diffMeses >= 2) {
-        setIsMoroso(true);
-        setMesesDeuda(diffMeses);
-      }
-    } catch (err) {
-      console.error("Error al verificar deuda:", err);
-    }
-  };
-
   const handlePayDebt = async () => {
-    if (!socio) return;
+    if (!socio || !socio.mesesDeuda) return;
     setLoadingLocal(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-mp-preference', {
         body: { 
           socio_dni: socio.dni, 
           nombre: `${socio.nombre} ${socio.apellido}`,
-          monto: 8000 * mesesDeuda, // Simulamos el monto total
+          monto: 8000 * socio.mesesDeuda, // Simulamos el monto total
         }
       });
       if (error) throw error;
@@ -131,6 +91,7 @@ export default function Reservar() {
       setLoadingLocal(false);
     }
   };
+
 
   const handleInformarPago = () => {
     if (!socio) return;
@@ -176,8 +137,8 @@ export default function Reservar() {
 
   const confirmReservation = async () => {
     if (!socio) return;
-    if (isMoroso) {
-      alert(`No puedes reservar: Posees una deuda de ${mesesDeuda} meses. Por favor, regulariza tu situación.`);
+    if (socio.isMoroso) {
+      alert(`No puedes reservar: Posees una deuda de ${socio.mesesDeuda} meses. Por favor, regulariza tu situación.`);
       return;
     }
     setReservingLocal(true);
@@ -318,7 +279,7 @@ export default function Reservar() {
 
     const handleClick = () => {
       if (isVencido) return;
-      if (isMoroso) {
+      if (socio?.isMoroso) {
          alert("Posees meses impagos. Por favor regulariza tu situación para reservar.");
          return;
       }
@@ -388,26 +349,27 @@ export default function Reservar() {
           <p className="text-center text-textSec py-10">Cargando...</p>
         ) : (
           <>
+            {socio?.isMoroso && (
+              <div className="bg-[#1a0f0f] border-2 border-blocked text-[#e8a3a3] p-5 rounded-xl mb-6 flex flex-col gap-4 shadow-[0_0_15px_rgba(239,68,68,0.15)] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blocked/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                <div className="flex flex-col gap-1 relative z-10">
+                  <p className="font-black tracking-wide text-sm text-blocked uppercase">⚠️ Bloqueo por Morosidad</p>
+                  <p className="text-sm font-medium">Se registran {socio.mesesDeuda} meses impagos. Por favor regulariza tu situación.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 relative z-10">
+                  <Button variant="primary" className="flex-1 font-bold shadow-lg shadow-primary/20" onClick={handlePayDebt} disabled={loadingLocal}>
+                      Mercado Pago
+                  </Button>
+                  <Button variant="secondary" className="flex-1 font-bold border-[#444] bg-[#222]" onClick={handleInformarPago} disabled={loadingLocal}>
+                      Informar Pago
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {canchasList.map(cancha => (
-              <div key={cancha.id}>
+              <div key={cancha.id} className="mb-8">
                 <h3 className="text-lg font-bold text-textPri mb-4 border-b border-[#2a2a2a] pb-2">{cancha.nombre}</h3>
-                {isMoroso && (
-                  <div className="bg-[#1a0f0f] border-2 border-blocked text-[#e8a3a3] p-5 rounded-xl mb-6 flex flex-col gap-4 shadow-[0_0_15px_rgba(239,68,68,0.15)] relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blocked/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-                    <div className="flex flex-col gap-1 relative z-10">
-                      <p className="font-black tracking-wide text-sm text-blocked uppercase">⚠️ Bloqueo por Morosidad</p>
-                      <p className="text-sm font-medium">Se registran {mesesDeuda} meses impagos. Por favor regulariza tu situación.</p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3 relative z-10">
-                      <Button variant="primary" className="flex-1 font-bold shadow-lg shadow-primary/20" onClick={handlePayDebt} disabled={loadingLocal}>
-                         Mercado Pago
-                      </Button>
-                      <Button variant="secondary" className="flex-1 font-bold border-[#444] bg-[#222]" onClick={handleInformarPago} disabled={loadingLocal}>
-                         Informar Pago
-                      </Button>
-                    </div>
-                  </div>
-                )}
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                   {SHIFTS.map(shift => renderBotonCancha(shift, cancha.id))}
                 </div>
