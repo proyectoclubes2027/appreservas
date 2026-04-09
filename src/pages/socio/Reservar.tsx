@@ -132,6 +132,13 @@ export default function Reservar() {
     }
   };
 
+  const handleInformarPago = () => {
+    if (!socio) return;
+    const mensaje = `Hola! Soy ${socio.nombre} ${socio.apellido}, mi DNI es ${socio.dni}. Quiero informar un pago para regularizar mi situación.`;
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+  };
+
   const hasActiveTurno = async (dniCheck: string) => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const nowHour = format(new Date(), 'HH:mm');
@@ -311,6 +318,10 @@ export default function Reservar() {
 
     const handleClick = () => {
       if (isVencido) return;
+      if (isMoroso) {
+         alert("Posees meses impagos. Por favor regulariza tu situación para reservar.");
+         return;
+      }
       if (isLibre) {
         handleReserveClick(shift, canchaId);
       } else {
@@ -381,14 +392,20 @@ export default function Reservar() {
               <div key={cancha.id}>
                 <h3 className="text-lg font-bold text-textPri mb-4 border-b border-[#2a2a2a] pb-2">{cancha.nombre}</h3>
                 {isMoroso && (
-                  <div className="bg-red-900/40 border border-red-500/50 text-red-200 p-4 rounded-xl mb-6 flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                      <p className="font-bold text-sm">⚠️ ACCESO RESTRINGIDO POR MOROSIDAD</p>
-                      <p className="text-xs opacity-90">Detectamos que tienes {mesesDeuda} meses pendientes de pago. Por favor regulariza tu situación para habilitar las reservas.</p>
+                  <div className="bg-[#1a0f0f] border-2 border-blocked text-[#e8a3a3] p-5 rounded-xl mb-6 flex flex-col gap-4 shadow-[0_0_15px_rgba(239,68,68,0.15)] relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blocked/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                    <div className="flex flex-col gap-1 relative z-10">
+                      <p className="font-black tracking-wide text-sm text-blocked uppercase">⚠️ Bloqueo por Morosidad</p>
+                      <p className="text-sm font-medium">Se registran {mesesDeuda} meses impagos. Por favor regulariza tu situación.</p>
                     </div>
-                    <Button variant="primary" fullWidth onClick={handlePayDebt} disabled={loadingLocal}>
-                       Pagar Deuda Online (Mercado Pago)
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-3 relative z-10">
+                      <Button variant="primary" className="flex-1 font-bold shadow-lg shadow-primary/20" onClick={handlePayDebt} disabled={loadingLocal}>
+                         Mercado Pago
+                      </Button>
+                      <Button variant="secondary" className="flex-1 font-bold border-[#444] bg-[#222]" onClick={handleInformarPago} disabled={loadingLocal}>
+                         Informar Pago
+                      </Button>
+                    </div>
                   </div>
                 )}
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">

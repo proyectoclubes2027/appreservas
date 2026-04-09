@@ -57,16 +57,30 @@ export default function Login() {
           } else if (signUpData?.user && !signUpData.session) {
             setError('⚠️ Error: Tienes activada la opción "Confirm email" en Supabase. Ve a Authentication > Providers > Email en Supabase y DESACTÍVALA para que los socios puedan entrar directo sin validar el correo real.');
           } else {
-            setTimeout(() => {
-                const checkSession = async () => {
-                    const { data } = await supabase.auth.getSession();
-                    if (!data.session) setError('Tu DNI no está registrado como socio ACTIVO en el club o la contraseña es incorrecta.');
-                };
-                checkSession();
-            }, 1000);
+            // Check socio status after signup
+            const { data: socioData } = await supabase.from('socios').select('activo, estado').eq('dni', cleanDni).single();
+            if (socioData && (socioData.activo === false || socioData.estado === 'inactivo')) {
+               await supabase.auth.signOut();
+               setError('Usuario inactivo. Comunicarse con la Sub Comision de Tenis');
+            } else {
+               setTimeout(() => {
+                   const checkSession = async () => {
+                       const { data } = await supabase.auth.getSession();
+                       if (!data.session) setError('Error al iniciar sesión tras el registro.');
+                   };
+                   checkSession();
+               }, 1000);
+            }
           }
         } else {
           setError(signInError.message);
+        }
+      } else {
+        // Successful login, check if active
+        const { data: socioData } = await supabase.from('socios').select('activo, estado').eq('dni', cleanDni).single();
+        if (socioData && (socioData.activo === false || socioData.estado === 'inactivo')) {
+           await supabase.auth.signOut();
+           setError('Usuario inactivo. Comunicarse con la Sub Comision de Tenis');
         }
       }
     } catch (err: any) {
