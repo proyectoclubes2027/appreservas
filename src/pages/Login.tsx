@@ -13,6 +13,25 @@ export default function Login() {
 
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   // Si ya hay usuario logueado, redirigí a la raíz para que App.tsx decida
   useEffect(() => {
@@ -131,11 +150,27 @@ export default function Login() {
             {loadingLocal ? 'Ingresando...' : 'Ingresar'}
           </Button>
 
+          {deferredPrompt && (
+            <Button 
+              type="button" 
+              variant="secondary" 
+              fullWidth 
+              onClick={handleInstallClick}
+              className="mt-2 border-primary text-primary"
+            >
+              Instalar Aplicación
+            </Button>
+          )}
 
-
-          <p className="text-center text-xs text-textSec mt-4">
-            Tu contraseña son los últimos<br /> 4 dígitos de tu DNI
-          </p>
+          <div className="flex flex-col gap-1 mt-4 text-center">
+            <p className="text-xs text-textSec">
+              Tu contraseña son los últimos<br /> 4 dígitos de tu DNI
+            </p>
+            {/* Hint for iOS users who don't see the button */}
+            <p className="text-[10px] text-[#555] italic lg:hidden">
+              En iPhone: Tocar Compartir y "Añadir a pantalla de inicio"
+            </p>
+          </div>
         </form>
       </div>
     </div>

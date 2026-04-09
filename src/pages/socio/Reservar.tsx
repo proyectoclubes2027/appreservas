@@ -70,35 +70,18 @@ export default function Reservar() {
     }
   };
 
-  const handlePayDebt = async () => {
-    if (!socio || !socio.mesesDeuda) return;
-    setLoadingLocal(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-mp-preference', {
-        body: { 
-          socio_dni: socio.dni, 
-          nombre: `${socio.nombre} ${socio.apellido}`,
-          monto: 8000 * (socio.mesesDeuda || 0), // Simulamos el monto total
-        }
-      });
-      if (error) throw error;
-      if (data.init_point) {
-        window.open(data.init_point, '_blank');
-      }
-    } catch (err: any) {
-      alert("Error al generar el link de pago: " + (err.message || "Error desconocido"));
-    } finally {
-      setLoadingLocal(false);
-    }
+  const handlePayDebt = () => {
+    alert("Próximamente habilitaremos el pago con Mercado Pago.");
   };
-
 
   const handleInformarPago = () => {
     if (!socio) return;
+    const phoneNumber = '543400510262';
     const mensaje = `Hola! Soy ${socio.nombre} ${socio.apellido}, mi DNI es ${socio.dni}. Quiero informar un pago para regularizar mi situación.`;
-    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
   };
+
 
   const hasActiveTurno = async (dniCheck: string) => {
     const today = format(new Date(), 'yyyy-MM-dd');
