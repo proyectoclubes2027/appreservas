@@ -9,8 +9,8 @@ type Socio = {
   apellido: string;
   rol: 'socio' | 'admin';
   activo: boolean;
-  telefono: string;
-  email: string | null;
+  telefono?: string;
+  email?: string | null;
   created_at: string;
 };
 
