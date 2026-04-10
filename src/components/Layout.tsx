@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, User, LogOut, Users, BarChart, Bell } from 'lucide-react';
 import { NotificationBanner } from './NotificationBanner';
 import { NewsPopup } from './NewsPopup';
-import { PwaPrompt } from './PwaPrompt';
+import { ProfileCompletionModal } from './ProfileCompletionModal';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { socio, signOut } = useAuth();
@@ -18,6 +18,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const isSocio = socio?.rol === 'socio';
   const isAdmin = socio?.rol === 'admin';
+  
+  // Condición para bloquear si falta completamiento (solo aplica a socios)
+  const isProfileIncomplete = isSocio && (!socio.telefono || !socio.email || socio.email === '');
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -32,17 +35,17 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         )}
       </header>
 
-      {/* Pop-up de noticias para socios */}
-      {isSocio && <NewsPopup />}
+      {/* Pop-up de completamiento de perfil obligatorio */}
+      {isProfileIncomplete && <ProfileCompletionModal />}
 
-      {/* Banner de notificaciones — solo para socios */}
-      {isSocio && <NotificationBanner />}
+      {/* Pop-up de noticias para socios (solo si el perfil está completo) */}
+      {isSocio && !isProfileIncomplete && <NewsPopup />}
 
-      {/* PWA Install Prompt globally visible */}
-      <PwaPrompt />
+      {/* Banner de notificaciones (solo si el perfil está completo) */}
+      {isSocio && !isProfileIncomplete && <NotificationBanner />}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20 p-4">
+      <main className={`flex-1 overflow-y-auto pb-20 p-4 ${isProfileIncomplete ? 'pointer-events-none blur-sm' : ''}`}>
         {children}
       </main>
 

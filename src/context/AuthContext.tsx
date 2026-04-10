@@ -9,10 +9,9 @@ type Socio = {
   apellido: string;
   rol: 'socio' | 'admin';
   activo: boolean;
-  estado?: string;
+  telefono: string;
+  email: string | null;
   created_at: string;
-  isMoroso?: boolean;
-  mesesDeuda?: number;
 };
 
 interface AuthContextType {
@@ -86,60 +85,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .single();
 
     if (!error && data) {
-      const socioData = data as Socio;
-      // Validar que el socio realmente esté ACTIVO antes de dejarlo pasar
-      if (socioData.activo === false || socioData.estado === 'inactivo') {
-         console.warn("Acceso denegado: Socio inactivo", socioData.dni);
-         sessionStorage.setItem('auth_error', 'inactive');
-         await supabase.auth.signOut();
-         setSocio(null);
-         setLoading(false);
-         return;
-      }
-
-      // NUEVO: Verificar deuda (Moroso)
-      try {
-        const { data: pagos } = await supabase
-          .from('pago_cuotas')
-          .select('mes_pagado')
-          .eq('socio_id', socioData.id);
-
-        const mesesPagados = pagos?.map(p => p.mes_pagado) || [];
-        const ahora = new Date();
-        
-        // Determinamos el mes de inicio de deuda
-        let mesInicio: Date;
-        if (mesesPagados.length > 0) {
-          // Si tiene pagos, el mes de inicio de deuda es el mes posterior al último pago
-          const maxMes = mesesPagados.reduce((max, current) => current > max ? current : max);
-          const [anio, mes] = maxMes.split("-").map(Number);
-          // Creamos una fecha en el mes siguiente al último pago
-          mesInicio = new Date(anio, mes, 1); // mes ya es 1-indexed en split, pero Date usa 0-indexed para el segundo arg. 
-          // Si maxMes es '2024-03', split da [2024, 3]. new Date(2024, 3, 1) es 1 Abril 2024. Correcto.
-        } else {
-          // Si no tiene pagos, usamos fecha de alta o creación
-          const fechaRef = (socioData as any).fecha_alta || socioData.created_at;
-          mesInicio = new Date(fechaRef);
-        }
-
-        const diffAnios = ahora.getFullYear() - mesInicio.getFullYear();
-        const diffMeses = (ahora.getMonth() - mesInicio.getMonth()) + (diffAnios * 12);
-
-        console.log(`Validación Morosidad [${socioData.dni}]: mesInicio=${mesInicio.toISOString()}, mesesDeuda=${diffMeses}`);
-
-        // Inyectamos el estado de morosidad en el objeto socio
-        (socioData as any).isMoroso = diffMeses >= 2;
-        (socioData as any).mesesDeuda = Math.max(0, diffMeses);
-      } catch (debtErr) {
-        console.error("Error al verificar deuda en AuthContext:", debtErr);
-      }
-
-      setSocio(socioData);
+      setSocio(data as Socio);
       setLoading(false);
     } else {
+      // El usuario existe en Auth pero NO en la tabla socios.
+      // Sign out inmediato para no permitir el ingreso.
       await supabase.auth.signOut();
       setSocio(null);
       setLoading(false);
+      // Podríamos disparar un evento global o solo dejarlo en la pantalla de login.
     }
   };
 
