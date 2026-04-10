@@ -11,6 +11,8 @@ type Socio = {
   activo: boolean;
   telefono?: string;
   email?: string | null;
+  isMoroso?: boolean;
+  mesesDeuda?: number;
   created_at: string;
 };
 
