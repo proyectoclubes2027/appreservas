@@ -20,6 +20,12 @@ export default function ReservasAdmin() {
   const [motivoBloqueo, setMotivoBloqueo] = useState('');
   const [tipoBloqueo, setTipoBloqueo] = useState<'mantenimiento' | 'clases'>('mantenimiento');
 
+  // States for Mass Blocking
+  const [isMassBlockModalOpen, setIsMassBlockModalOpen] = useState(false);
+  const [massBlockStartHour, setMassBlockStartHour] = useState('08:00');
+  const [massBlockMotivo, setMassBlockMotivo] = useState('Lluvia');
+  const [massBlockLoading, setMassBlockLoading] = useState(false);
+
   // States for detail modal
   const [infoTurno, setInfoTurno] = useState<any>(null);
 
@@ -33,6 +39,61 @@ export default function ReservasAdmin() {
     };
     initPage();
   }, [selectedDate]);
+
+  const confirmMassBlock = async () => {
+    setMassBlockLoading(true);
+    let inserts: any[] = [];
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    let affectedTurnos: any[] = [];
+
+    canchasList.forEach(cancha => {
+      SHIFTS.forEach(shift => {
+        if (shift.start >= massBlockStartHour) {
+          inserts.push({
+            cancha_id: cancha.id,
+            fecha: dateStr,
+            hora_inicio: shift.start,
+            hora_fin: shift.end,
+            estado: 'bloqueado',
+            motivo_bloqueo: massBlockMotivo || 'Clima / Mantenimiento',
+            socio_dni: null,
+            acompanante: null
+          });
+
+          const existingTurno = turnosData.find((t: any) => t.hora_inicio.startsWith(shift.start) && t.cancha_id === cancha.id);
+          if (existingTurno && existingTurno.estado === 'ocupado') {
+            affectedTurnos.push(existingTurno);
+          }
+        }
+      });
+    });
+
+    const { error } = await supabase.from('turnos').upsert(inserts, { onConflict: 'cancha_id,fecha,hora_inicio' });
+
+    if (error) {
+      alert("Error en bloqueo masivo: " + error.message);
+    } else {
+      affectedTurnos.forEach(turno => {
+        if (turno.socio_dni) {
+          supabase.functions.invoke('notify-cancellation', {
+            body: { 
+              socio_dni: turno.socio_dni,
+              fecha: format(new Date(turno.fecha), 'dd/MM/yyyy'),
+              hora: turno.hora_inicio.substring(0, 5),
+              motivo: `Cancelación Masiva: ${massBlockMotivo}`
+            }
+          }).catch(err => console.error("Error al notificar masivamente", err));
+        }
+      });
+      
+      alert(`Bloqueo masivo aplicado. Se cancelaron ${affectedTurnos.length} turnos ocupados y se bloquearon las canchas a partir de las ${massBlockStartHour}hs.`);
+      fetchTurnos();
+      setIsMassBlockModalOpen(false);
+      setMassBlockMotivo('Lluvia');
+      setMassBlockStartHour('08:00');
+    }
+    setMassBlockLoading(false);
+  };
 
   const fetchTurnos = async () => {
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -169,7 +230,13 @@ export default function ReservasAdmin() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-xl font-bold uppercase tracking-wide text-textSec">Gestión de Reservas</h2>
+      <div className="flex justify-between items-center bg-surface p-4 rounded-xl border border-border mt-2">
+        <h2 className="text-xl font-bold uppercase tracking-wide text-textSec m-0">Gestión de Reservas</h2>
+        <Button variant="danger" onClick={() => setIsMassBlockModalOpen(true)} className="flex items-center gap-2 shadow-sm text-xs sm:text-sm shadow-danger/20">
+          <span className="hidden sm:inline">⛈️ Bloqueo Masivo</span>
+          <span className="inline sm:hidden">⛈️ Bloquear Día</span>
+        </Button>
+      </div>
 
       {/* Date Selector */}
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -249,6 +316,53 @@ export default function ReservasAdmin() {
             <div className="flex gap-3">
               <Button variant="secondary" fullWidth onClick={() => setIsModalOpen(false)}>Atrás</Button>
               <Button variant="primary" fullWidth onClick={confirmBlock}>Confirmar Bloqueo</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Bloqueo Masivo */}
+      {isMassBlockModalOpen && (
+        <div className="fixed inset-0 bg-[#0d0d0d]/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-surface border border-danger/50 shadow-[0_0_15px_rgba(239,68,68,0.15)] rounded-xl p-6 w-full max-w-sm">
+            <h3 className="text-xl font-black mb-1 text-danger uppercase tracking-tighter">⛈️ Bloqueo Masivo</h3>
+            <p className="text-sm mb-6 text-textSec">Día: {format(selectedDate, 'dd/MM/yyyy')}</p>
+            
+            <div className="flex flex-col gap-4 mb-6">
+              <div>
+                <label className="text-xs font-bold text-textSec uppercase mb-1 block">A partir del horario:</label>
+                <select 
+                  className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-md p-3 text-textPri outline-none focus:border-primary"
+                  value={massBlockStartHour}
+                  onChange={e => setMassBlockStartHour(e.target.value)}
+                >
+                  {SHIFTS.map(s => (
+                    <option key={s.start} value={s.start}>{s.start} hs</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-textSec uppercase mb-1 block">Motivo (Visible para socios):</label>
+                <input
+                  type="text"
+                  className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-md p-3 text-textPri outline-none focus:border-danger"
+                  placeholder="Ej: Lluvia / Cierre temporal"
+                  value={massBlockMotivo}
+                  onChange={e => setMassBlockMotivo(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="bg-danger/10 text-danger text-xs font-bold p-3 rounded-lg border border-danger/20 mb-6 text-center leading-relaxed">
+              ⚠️ Al confirmar, <b>TODOS</b> los turnos a partir de este horario quedarán bloqueados, y las reservas vigentes serán CANCELADAS devolviendo el cupo al socio.
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="secondary" fullWidth onClick={() => setIsMassBlockModalOpen(false)}>Cancelar</Button>
+              <Button variant="danger" fullWidth onClick={confirmMassBlock} disabled={massBlockLoading}>
+                {massBlockLoading ? 'Procesando...' : 'Aplicar'}
+              </Button>
             </div>
           </div>
         </div>
