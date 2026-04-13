@@ -26,7 +26,6 @@ export default function NoticiasAdmin() {
     if (!error && data) {
       setNoticias(data);
     }
-    setLoading(true);
     setLoading(false);
   };
 
@@ -62,9 +61,15 @@ export default function NoticiasAdmin() {
   };
 
   const toggleActivo = async (id: string, currentStatus: boolean) => {
+    const updates: any = { activo: !currentStatus };
+    if (!currentStatus) {
+      // Si la volvemos a activar, le ponemos fecha actual para que sea la mas reciente
+      updates.fecha_creacion = new Date().toISOString();
+    }
+    
     const { error } = await supabase
       .from('noticias')
-      .update({ activo: !currentStatus })
+      .update(updates)
       .eq('id', id);
 
     if (!error) fetchNoticias();
@@ -117,21 +122,26 @@ export default function NoticiasAdmin() {
             <div key={n.id} className={`bg-surface border ${n.activo ? 'border-border' : 'border-dashed border-[#333] opacity-60'} p-4 rounded-xl flex flex-col gap-2`}>
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="font-bold text-textPri">{n.titulo}</h4>
-                  <p className="text-[10px] text-textSec font-bold uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <h4 className={`font-bold ${n.activo ? 'text-textPri' : 'text-textSec'}`}>{n.titulo}</h4>
+                    <span className={`text-[8px] px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wider ${n.activo ? 'bg-primary/20 text-primary' : 'bg-[#333] text-textSec'}`}>
+                      {n.activo ? 'Pública' : 'Oculta'}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-textSec font-bold uppercase tracking-wider mt-1">
                     {format(new Date(n.fecha_creacion), "d 'de' MMMM, HH:mm'hs'", { locale: es })}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0">
                   <button 
                     onClick={() => toggleActivo(n.id, n.activo)}
-                    className={`text-[10px] uppercase font-black px-2 py-1 rounded border ${n.activo ? 'border-primary text-primary' : 'border-textSec text-textSec'}`}
+                    className="text-[10px] uppercase font-black px-2 py-1 rounded border border-textSec text-textSec hover:border-textPri hover:text-textPri transition-colors"
                   >
-                    {n.activo ? 'Activa' : 'Oculta'}
+                    {n.activo ? 'Desactivar' : 'Activar'}
                   </button>
                   <button 
                     onClick={() => eliminarNoticia(n.id)}
-                    className="text-[10px] uppercase font-black px-2 py-1 rounded border border-danger text-danger"
+                    className="text-[10px] uppercase font-black px-2 py-1 rounded border border-danger/50 text-danger hover:border-danger hover:bg-danger/10 transition-colors"
                   >
                     Eliminar
                   </button>
