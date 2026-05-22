@@ -5,6 +5,12 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
 
+const isValidUuid = (value: any): boolean => {
+  if (typeof value !== 'string') return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(value);
+};
+
 export default function MisTurnos() {
   const { socio } = useAuth();
   const [turnos, setTurnos] = useState<any[]>([]);
@@ -43,9 +49,9 @@ export default function MisTurnos() {
         acompanante: null 
       });
 
-    if (id && id !== 'undefined') {
+    if (id && isValidUuid(id)) {
       query = query.eq('id', id);
-    } else if (typeof turno === 'object') {
+    } else if (typeof turno === 'object' && turno !== null) {
       query = query
         .eq('cancha_id', turno.cancha_id)
         .eq('fecha', turno.fecha)
@@ -61,7 +67,7 @@ export default function MisTurnos() {
       alert("Error al cancelar: " + error.message);
     } else {
       let finalId = id;
-      if ((!finalId || finalId === 'undefined') && typeof turno === 'object') {
+      if ((!finalId || !isValidUuid(finalId)) && typeof turno === 'object' && turno !== null) {
         const { data: updatedTurno } = await supabase
           .from('turnos')
           .select('id')
@@ -69,12 +75,12 @@ export default function MisTurnos() {
           .eq('fecha', turno.fecha)
           .eq('hora_inicio', turno.hora_inicio)
           .single();
-        if (updatedTurno) {
+        if (updatedTurno && isValidUuid(updatedTurno.id)) {
           finalId = updatedTurno.id;
         }
       }
 
-      if (finalId && finalId !== 'undefined') {
+      if (finalId && isValidUuid(finalId)) {
         supabase.functions.invoke('notify-waitlist', {
           body: { turno_id: finalId }
         }).catch(err => console.error("Error al notificar lista de espera", err));
