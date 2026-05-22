@@ -158,23 +158,76 @@ export default function ReservasAdmin() {
     if (!confirm(message)) return;
     
     setLoadingLocal(true);
-    const { error } = await supabase.from('turnos').delete().eq('id', turno.id);
-    
-    if (!error) {
-       // Si estaba ocupado, notificamos al socio
-       if (isOcupado && turno.socio_dni) {
-         supabase.functions.invoke('notify-cancellation', {
-           body: { 
-             socio_dni: turno.socio_dni,
-             fecha: format(new Date(turno.fecha), 'dd/MM/yyyy'),
-             hora: turno.hora_inicio.substring(0, 5),
-             motivo: 'Cancelación por administración / Clima'
-           }
-         }).catch(err => console.error("Error al notificar cancelación", err));
-       }
+    const id = typeof turno === 'string' ? turno : turno?.id;
 
-       fetchTurnos();
-       setInfoTurno(null);
+    let query;
+    if (isOcupado) {
+      // Si está ocupado, lo actualizamos a libre para que se pueda notificar a la lista de espera
+      query = supabase
+        .from('turnos')
+        .update({ 
+          estado: 'libre', 
+          socio_dni: null, 
+          acompanante: null 
+        });
+    } else {
+      // De lo contrario (bloqueado), eliminamos la fila
+      query = supabase
+        .from('turnos')
+        .delete();
+    }
+
+    if (id && id !== 'undefined') {
+      query = query.eq('id', id);
+    } else if (typeof turno === 'object') {
+      query = query
+        .eq('cancha_id', turno.cancha_id)
+        .eq('fecha', turno.fecha)
+        .eq('hora_inicio', turno.hora_inicio);
+    } else {
+      alert("Error: No se pudo identificar el turno.");
+      setLoadingLocal(false);
+      return;
+    }
+
+    const { error } = await query;
+    if (!error) {
+      if (isOcupado) {
+        // Notificar al socio cancelado
+        if (turno.socio_dni) {
+          supabase.functions.invoke('notify-cancellation', {
+            body: { 
+              socio_dni: turno.socio_dni,
+              fecha: format(new Date(turno.fecha), 'dd/MM/yyyy'),
+              hora: turno.hora_inicio.substring(0, 5),
+              motivo: 'Cancelación por administración / Clima'
+            }
+          }).catch(err => console.error("Error al notificar cancelación", err));
+        }
+
+        // Notificar a la lista de espera
+        let finalId = id;
+        if ((!finalId || finalId === 'undefined') && typeof turno === 'object') {
+          const { data: updatedTurno } = await supabase
+            .from('turnos')
+            .select('id')
+            .eq('cancha_id', turno.cancha_id)
+            .eq('fecha', turno.fecha)
+            .eq('hora_inicio', turno.hora_inicio)
+            .single();
+          if (updatedTurno) {
+            finalId = updatedTurno.id;
+          }
+        }
+
+        if (finalId && finalId !== 'undefined') {
+          supabase.functions.invoke('notify-waitlist', {
+            body: { turno_id: finalId }
+          }).catch(err => console.error("Error al notificar lista de espera", err));
+        }
+      }
+      fetchTurnos();
+      setInfoTurno(null);
     } else {
       alert("Error: " + error.message);
     }
@@ -394,7 +447,7 @@ export default function ReservasAdmin() {
             
             <div className="flex gap-3">
               <Button variant="secondary" fullWidth onClick={() => setInfoTurno(null)}>Cerrar</Button>
-              <Button variant="danger" fullWidth onClick={() => unlockOrCancel(infoTurno.id)}>
+              <Button variant="danger" fullWidth onClick={() => unlockOrCancel(infoTurno)}>
                 {infoTurno.estado === 'bloqueado' ? 'Desbloquear' : 'Cancelar Turno'}
               </Button>
             </div>

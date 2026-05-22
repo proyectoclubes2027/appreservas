@@ -30,25 +30,55 @@ export default function MisTurnos() {
     setLoadingLocal(false);
   };
 
-  const cancelTurno = async (id: string) => {
+  const cancelTurno = async (turno: any) => {
     if (!confirm('¿Estás seguro de cancelar este turno?')) return;
     
-    // Lo marcamos como libre y vaciamos el socio
-    const { error } = await supabase
+    const id = typeof turno === 'string' ? turno : turno?.id;
+    
+    let query = supabase
       .from('turnos')
       .update({ 
         estado: 'libre', 
         socio_dni: null, 
         acompanante: null 
-      })
-      .eq('id', id);
+      });
+
+    if (id && id !== 'undefined') {
+      query = query.eq('id', id);
+    } else if (typeof turno === 'object') {
+      query = query
+        .eq('cancha_id', turno.cancha_id)
+        .eq('fecha', turno.fecha)
+        .eq('hora_inicio', turno.hora_inicio);
+    } else {
+      alert("Error: No se pudo identificar el turno a cancelar.");
+      return;
+    }
+      
+    const { error } = await query;
       
     if (error) {
       alert("Error al cancelar: " + error.message);
     } else {
-      supabase.functions.invoke('notify-waitlist', {
-        body: { turno_id: id }
-      }).catch(err => console.error("Error al notificar lista de espera", err));
+      let finalId = id;
+      if ((!finalId || finalId === 'undefined') && typeof turno === 'object') {
+        const { data: updatedTurno } = await supabase
+          .from('turnos')
+          .select('id')
+          .eq('cancha_id', turno.cancha_id)
+          .eq('fecha', turno.fecha)
+          .eq('hora_inicio', turno.hora_inicio)
+          .single();
+        if (updatedTurno) {
+          finalId = updatedTurno.id;
+        }
+      }
+
+      if (finalId && finalId !== 'undefined') {
+        supabase.functions.invoke('notify-waitlist', {
+          body: { turno_id: finalId }
+        }).catch(err => console.error("Error al notificar lista de espera", err));
+      }
       fetchMisTurnos();
     }
   };
@@ -88,7 +118,7 @@ export default function MisTurnos() {
                 </div>
                 
                 {isFuture && turno.estado === 'ocupado' ? (
-                  <Button variant="danger" className="text-xs px-4 py-2" onClick={() => cancelTurno(turno.id)}>
+                  <Button variant="danger" className="text-xs px-4 py-2" onClick={() => cancelTurno(turno)}>
                     Cancelar
                   </Button>
                 ) : (
