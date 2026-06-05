@@ -61,13 +61,39 @@ export default function Reservar() {
   };
 
   const fetchSocios = async () => {
-    const { data } = await supabase
+    // Fetch socios
+    const { data: sociosData } = await supabase
       .from('socios')
-      .select('dni, nombre, apellido, isMoroso, mesesDeuda')
+      .select('id, dni, nombre, apellido')
       .eq('activo', true)
       .eq('estado', 'activo')
       .order('apellido', { ascending: true });
-    if (data) setSociosList(data);
+
+    if (!sociosData) return;
+
+    // Fetch cuotas pendientes/vencidas para calcular morosidad
+    const { data: cuotasData } = await supabase
+      .from('cuotas')
+      .select('socio_id, estado')
+      .in('estado', ['pendiente', 'vencida']);
+
+    // Calcular meses de deuda por socio
+    const deudaMap = new Map<string, number>();
+    if (cuotasData) {
+      for (const cuota of cuotasData) {
+        const count = deudaMap.get(cuota.socio_id) || 0;
+        deudaMap.set(cuota.socio_id, count + 1);
+      }
+    }
+
+    // Enriquecer la lista con isMoroso y mesesDeuda
+    const enriched = sociosData.map(s => ({
+      ...s,
+      mesesDeuda: deudaMap.get(s.id) || 0,
+      isMoroso: (deudaMap.get(s.id) || 0) >= 2,
+    }));
+
+    setSociosList(enriched);
   };
 
   const fetchCanchas = async () => {
