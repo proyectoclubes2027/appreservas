@@ -87,7 +87,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .single();
 
     if (!error && data) {
-      setSocio(data as Socio);
+      const socioData = data as Socio & { fecha_alta?: string; categoria?: string };
+      
+      // Calcular morosidad
+      let isMoroso = false;
+      let mesesDeuda = 0;
+      
+      if (socioData.categoria !== 'vitalicio' && socioData.rol !== 'admin') {
+        const { data: pagos } = await supabase
+          .from('pago_cuotas')
+          .select('mesPagado')
+          .eq('socio_id', socioData.id)
+          .order('mesPagado', { ascending: false })
+          .limit(1);
+
+        const ahora = new Date();
+        const yA = ahora.getFullYear();
+        const mA = ahora.getMonth() + 1;
+
+        if (pagos && pagos.length > 0) {
+          const [y, m] = pagos[0].mesPagado.split("-").map(Number);
+          mesesDeuda = (yA - y) * 12 + (mA - m);
+        } else if (socioData.fecha_alta) {
+          const fechaAlta = new Date(socioData.fecha_alta);
+          mesesDeuda = (yA - fechaAlta.getFullYear()) * 12 + (mA - (fechaAlta.getMonth() + 1));
+        }
+
+        mesesDeuda = Math.max(0, mesesDeuda);
+        isMoroso = mesesDeuda >= 2;
+      }
+
+      setSocio({ ...socioData, isMoroso, mesesDeuda } as Socio);
       setLoading(false);
     } else {
       // El usuario existe en Auth pero NO en la tabla socios.
