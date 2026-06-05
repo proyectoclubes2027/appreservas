@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS socios (
     nombre TEXT NOT NULL,
     apellido TEXT NOT NULL,
     activo BOOLEAN DEFAULT true,
+    email TEXT,
     rol TEXT DEFAULT 'socio' CHECK (rol IN ('socio', 'admin')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -40,6 +41,22 @@ CREATE TABLE IF NOT EXISTS turnos (
 ALTER TABLE turnos ADD CONSTRAINT turnos_cancha_fecha_hora_key UNIQUE (cancha_id, fecha, hora_inicio);
 
 
+-- 4. Tabla: cuotas
+CREATE TABLE IF NOT EXISTS cuotas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    socio_id UUID REFERENCES socios(id) ON DELETE CASCADE,
+    mes TEXT NOT NULL,
+    monto NUMERIC NOT NULL,
+    estado TEXT DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'pagada', 'vencida')),
+    fecha_vencimiento DATE NOT NULL,
+    fecha_pago DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Asegurar que no haya dos cuotas para el mismo mes y socio
+ALTER TABLE cuotas ADD CONSTRAINT cuotas_socio_mes_key UNIQUE (socio_id, mes);
+
+
 -- SEED DATA INICIAL
 INSERT INTO canchas (id, nombre) VALUES 
 (1, 'Cancha 1'), 
@@ -54,6 +71,7 @@ ON CONFLICT (dni) DO NOTHING;
 ALTER TABLE socios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE canchas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE turnos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cuotas ENABLE ROW LEVEL SECURITY;
 
 -- Funciones helper para RLS
 CREATE OR REPLACE FUNCTION public.get_user_dni()
@@ -107,3 +125,10 @@ CREATE POLICY "Socio puede insertar turnos si no existian y son libres u ocupado
         auth.role() = 'authenticated' AND NOT public.is_admin() AND
         (socio_dni = public.get_user_dni() OR socio_dni IS NULL)
     );
+
+-- Politicas para 'cuotas'
+CREATE POLICY "Admin puede modificar cuotas" ON cuotas
+    FOR ALL USING (public.is_admin());
+
+CREATE POLICY "Cuotas visibles para todos los autenticados" ON cuotas
+    FOR SELECT USING (auth.role() = 'authenticated');
