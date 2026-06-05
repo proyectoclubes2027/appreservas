@@ -63,7 +63,7 @@ export default function Reservar() {
   const fetchSocios = async () => {
     const { data } = await supabase
       .from('socios')
-      .select('dni, nombre, apellido')
+      .select('dni, nombre, apellido, isMoroso, mesesDeuda')
       .eq('activo', true)
       .eq('estado', 'activo')
       .order('apellido', { ascending: true });
@@ -150,12 +150,19 @@ export default function Reservar() {
       return;
     }
 
-    // Validate rules: Max 1 active for EVERY participant
+    // Validate rules: Max 1 active for EVERY participant, and no participant can be moroso
     for (const d of participants) {
+      const s = sociosList.find(x => x.dni === d) || (d === socio.dni ? socio : null);
+      if (s?.isMoroso) {
+        alert(`Error: El jugador ${s.apellido}, ${s.nombre} posee una deuda de ${s.mesesDeuda} meses. No puede registrar reservas.`);
+        setReservingLocal(false);
+        return;
+      }
+
       const active = await hasActiveTurno(d);
       if (active) {
-        const s = sociosList.find(x => x.dni === d) || socio;
-        alert(`Error: El jugador ${s.apellido}, ${s.nombre} ya tiene un turno activo. Debe cancelarlo antes de reservar o integrar otra partida.`);
+        const sObj = s || socio;
+        alert(`Error: El jugador ${sObj.apellido}, ${sObj.nombre} ya tiene un turno activo. Debe cancelarlo antes de reservar o integrar otra partida.`);
         setReservingLocal(false);
         return;
       }
@@ -441,7 +448,7 @@ export default function Reservar() {
               <label className="text-xs font-semibold text-textSec uppercase">Jugador/es Rivales (opcional)</label>
               
               <SearchableSelect
-                 options={sociosList.filter(s => s.dni !== socio?.dni).map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}` }))}
+                 options={sociosList.filter(s => s.dni !== socio?.dni).map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}`, isMoroso: s.isMoroso, mesesDeuda: s.mesesDeuda }))}
                  value={comp1}
                  onChange={setComp1}
                  placeholder="Seleccionar Jugador 2..."
@@ -450,13 +457,13 @@ export default function Reservar() {
               {tipoJuego === 'dobles' && (
                 <>
                   <SearchableSelect
-                     options={sociosList.filter(s => s.dni !== socio?.dni).map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}` }))}
+                     options={sociosList.filter(s => s.dni !== socio?.dni).map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}`, isMoroso: s.isMoroso, mesesDeuda: s.mesesDeuda }))}
                      value={comp2}
                      onChange={setComp2}
                      placeholder="Seleccionar Jugador 3..."
                   />
                   <SearchableSelect
-                     options={sociosList.filter(s => s.dni !== socio?.dni).map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}` }))}
+                     options={sociosList.filter(s => s.dni !== socio?.dni).map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}`, isMoroso: s.isMoroso, mesesDeuda: s.mesesDeuda }))}
                      value={comp3}
                      onChange={setComp3}
                      placeholder="Seleccionar Jugador 4..."

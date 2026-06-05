@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from 'react';
 interface Option {
   value: string;
   label: string;
+  isMoroso?: boolean;
+  mesesDeuda?: number;
 }
 
 interface SearchableSelectProps {
@@ -75,30 +77,48 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Busc
               filtered.map(o => {
                 const initials = getInitials(o.label);
                 const isSelected = o.value === value;
+                const isMoroso = o.isMoroso;
                 
                 return (
                   <li
                     key={o.value}
-                    className={`group flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all mb-0.5 last:mb-0 ${
-                      isSelected 
-                        ? 'bg-primary text-[#0d0d0d]' 
-                        : 'hover:bg-[#252525] text-textPri'
+                    className={`group flex items-center gap-3 p-2.5 rounded-lg transition-all mb-0.5 last:mb-0 ${
+                      isMoroso
+                        ? 'bg-[#1a0f0f]/40 border border-blocked/20 text-blocked cursor-not-allowed'
+                        : isSelected 
+                          ? 'bg-primary text-[#0d0d0d] cursor-pointer' 
+                          : 'hover:bg-[#252525] text-textPri cursor-pointer'
                     }`}
                     onClick={() => {
+                      if (isMoroso) return;
                       onChange(o.value);
                       setIsOpen(false);
                       setSearch('');
                     }}
                   >
                     <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black border ${
-                      isSelected ? 'bg-black/10 border-black/20' : 'bg-[#0d0d0d] border-[#333] text-primary group-hover:border-primary/30 transition-colors'
+                      isMoroso
+                        ? 'bg-blocked/10 border-blocked/30 text-blocked'
+                        : isSelected 
+                          ? 'bg-black/10 border-black/20' 
+                          : 'bg-[#0d0d0d] border-[#333] text-primary group-hover:border-primary/30 transition-colors'
                     }`}>
                       {initials}
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold">{o.label}</span>
-                      {!isSelected && o.value && (
-                        <span className="text-[10px] text-textSec group-hover:text-textPri/60 transition-colors">DNI: {o.value}</span>
+                      <span className={`text-sm font-semibold ${isMoroso ? 'text-blocked' : ''}`}>
+                        {o.label} {isMoroso && <span className="text-xs font-bold text-blocked/80 ml-1">(Moroso)</span>}
+                      </span>
+                      {o.value && (
+                        <span className={`text-[10px] ${
+                          isMoroso 
+                            ? 'text-blocked/60'
+                            : isSelected
+                              ? 'text-[#0d0d0d]/60'
+                              : 'text-textSec group-hover:text-textPri/60 transition-colors'
+                        }`}>
+                          DNI: {o.value} {isMoroso && o.mesesDeuda !== undefined && `• Deuda: ${o.mesesDeuda} meses`}
+                        </span>
                       )}
                     </div>
                     {isSelected && (
