@@ -61,37 +61,63 @@ export default function Reservar() {
   };
 
   const fetchSocios = async () => {
-    // Fetch socios
+    // Fetch socios with their category and join date to calculate debt properly
     const { data: sociosData } = await supabase
       .from('socios')
-      .select('id, dni, nombre, apellido')
+      .select('id, dni, nombre, apellido, categoria, rol, fecha_alta')
       .eq('activo', true)
       .eq('estado', 'activo')
       .order('apellido', { ascending: true });
 
     if (!sociosData) return;
 
-    // Fetch cuotas pendientes/vencidas para calcular morosidad
-    const { data: cuotasData } = await supabase
-      .from('cuotas')
-      .select('socio_id, estado')
-      .in('estado', ['pendiente', 'vencida']);
+    // Fetch todos los pagos para calcular la morosidad
+    const { data: pagosData } = await supabase
+      .from('pago_cuotas')
+      .select('socio_id, mesPagado');
 
-    // Calcular meses de deuda por socio
-    const deudaMap = new Map<string, number>();
-    if (cuotasData) {
-      for (const cuota of cuotasData) {
-        const count = deudaMap.get(cuota.socio_id) || 0;
-        deudaMap.set(cuota.socio_id, count + 1);
+    // Mapear el último pago por socio
+    const ultimoPagoMap = new Map<string, string>();
+    if (pagosData) {
+      for (const pago of pagosData) {
+        const currentLast = ultimoPagoMap.get(pago.socio_id);
+        // mesPagado tiene formato YYYY-MM así que se puede comparar como string
+        if (!currentLast || pago.mesPagado > currentLast) {
+          ultimoPagoMap.set(pago.socio_id, pago.mesPagado);
+        }
       }
     }
 
+    const ahora = new Date();
+    const yA = ahora.getFullYear();
+    const mA = ahora.getMonth() + 1;
+
     // Enriquecer la lista con isMoroso y mesesDeuda
-    const enriched = sociosData.map(s => ({
-      ...s,
-      mesesDeuda: deudaMap.get(s.id) || 0,
-      isMoroso: (deudaMap.get(s.id) || 0) >= 2,
-    }));
+    const enriched = sociosData.map(s => {
+      // Vitalicios and admins are never morosos
+      if (s.categoria === 'vitalicio' || s.rol === 'admin') {
+        return { ...s, mesesDeuda: 0, isMoroso: false };
+      }
+
+      const ultimoPago = ultimoPagoMap.get(s.id);
+      let mesesAdeudados = 0;
+
+      if (ultimoPago) {
+        const [y, m] = ultimoPago.split("-").map(Number);
+        mesesAdeudados = (yA - y) * 12 + (mA - m);
+      } else if (s.fecha_alta) {
+        const fechaAlta = new Date(s.fecha_alta);
+        mesesAdeudados = (yA - fechaAlta.getFullYear()) * 12 + (mA - (fechaAlta.getMonth() + 1));
+      }
+
+      mesesAdeudados = Math.max(0, mesesAdeudados);
+
+      return {
+        ...s,
+        mesesDeuda: mesesAdeudados,
+        isMoroso: mesesAdeudados >= 2,
+      };
+    });
 
     setSociosList(enriched);
   };
