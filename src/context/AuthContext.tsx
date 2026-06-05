@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (socioData.categoria !== 'vitalicio' && socioData.rol !== 'admin') {
         const { data: pagos } = await supabase
           .from('pago_cuotas')
-          .select('mesPagado')
+          .select('*')
           .eq('socio_id', socioData.id)
           .order('mesPagado', { ascending: false })
           .limit(1);
@@ -106,11 +106,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const mA = ahora.getMonth() + 1;
 
         if (pagos && pagos.length > 0) {
-          const [y, m] = pagos[0].mesPagado.split("-").map(Number);
-          mesesDeuda = (yA - y) * 12 + (mA - m);
+          // El campo puede llamarse 'mesPagado' o 'mespagado' según PostgREST
+          const mesPagado: string = pagos[0].mesPagado ?? pagos[0].mespagado ?? '';
+          if (mesPagado) {
+            const [y, m] = mesPagado.split('-').map(Number);
+            mesesDeuda = (yA - y) * 12 + (mA - m);
+          }
         } else if (socioData.fecha_alta) {
-          const fechaAlta = new Date(socioData.fecha_alta);
-          mesesDeuda = (yA - fechaAlta.getFullYear()) * 12 + (mA - (fechaAlta.getMonth() + 1));
+          // Parsear YYYY-MM-DD para evitar el desfase de timezone
+          const fechaStr = String(socioData.fecha_alta).substring(0, 10);
+          const [fy, fm] = fechaStr.split('-').map(Number);
+          mesesDeuda = (yA - fy) * 12 + (mA - fm);
         }
 
         mesesDeuda = Math.max(0, mesesDeuda);
