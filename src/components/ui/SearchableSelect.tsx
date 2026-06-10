@@ -117,7 +117,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Busc
                               ? 'text-[#0d0d0d]/60'
                               : 'text-textSec group-hover:text-textPri/60 transition-colors'
                         }`}>
-                          DNI: {o.value} {isMoroso && o.mesesDeuda !== undefined && `• Deuda: ${o.mesesDeuda} meses`}
+                          DNI: {o.value}
                         </span>
                       )}
                     </div>
