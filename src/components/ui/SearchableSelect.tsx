@@ -107,7 +107,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Busc
                     </div>
                     <div className="flex flex-col">
                       <span className={`text-sm font-semibold ${isMoroso ? 'text-blocked' : ''}`}>
-                        {o.label} {isMoroso && <span className="text-xs font-bold text-blocked/80 ml-1">(Moroso)</span>}
+                        {o.label}
                       </span>
                       {o.value && (
                         <span className={`text-[10px] ${
