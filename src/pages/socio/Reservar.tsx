@@ -104,8 +104,16 @@ export default function Reservar() {
       }
 
       const ahora = new Date();
-      const yA = ahora.getFullYear();
-      const mA = ahora.getMonth() + 1;
+      let yA = ahora.getFullYear();
+      let mA = ahora.getMonth() + 1;
+
+      if (ahora.getDate() < 15) {
+        mA -= 1;
+        if (mA === 0) {
+          mA = 12;
+          yA -= 1;
+        }
+      }
 
       const enriched = sociosData.map(s => {
         // Vitalicios y admins nunca son morosos

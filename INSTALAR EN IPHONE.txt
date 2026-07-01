@@ -1,0 +1,11 @@
+Para los usuarios de iPhone (iOS), la instalación de una aplicación web progresiva (PWA) se realiza a través del navegador Safari (es importante que usen Safari, ya que otros navegadores en iOS pueden tener restricciones).
+
+Estos son los pasos que deben seguir cuando ingresan al link desde su celular:
+
+Abrir el link en Safari: El usuario debe ingresar al enlace de la aplicación desde el navegador Safari de su iPhone.
+Tocar el botón "Compartir": En la barra inferior del navegador, deben tocar el ícono de compartir (es un cuadrado con una flecha apuntando hacia arriba 📤).
+Seleccionar "Agregar a inicio": En el menú que se despliega, deben deslizar hacia abajo hasta encontrar la opción que dice "Agregar a inicio" (o "Add to Home Screen" si lo tienen en inglés) y tocarla.
+Confirmar: Se abrirá una pantalla mostrando el nombre y el ícono de la app. Solo deben tocar "Agregar" en la esquina superior derecha.
+¡Listo! La aplicación aparecerá en la pantalla de inicio de su iPhone como si fuera una aplicación nativa descargada de la App Store, y podrán usarla a pantalla completa.
+
+(Opcional: Si quieres, podemos agregar un pequeño mensaje o cartel en tu aplicación que detecte si el usuario está en iOS y le muestre estas instrucciones, ya que Apple no permite mostrar el botón automático de "Instalar" que sí existe en Android).
