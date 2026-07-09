@@ -174,13 +174,19 @@ export default function Reservar() {
     const today = format(new Date(), 'yyyy-MM-dd');
     const nowHour = format(new Date(), 'HH:mm');
     
+    // Construir el string de nombre que se usa en 'acompanante'
+    const s = sociosList.find(x => x.dni === dniCheck) || (dniCheck === socio?.dni ? socio : null);
+    if (!s) return false;
+    const nameStr = `${s.apellido}, ${s.nombre.charAt(0)}.`;
+
     // Obtenemos los turnos del jugador desde hoy en adelante que estén OCUPADOS
-    const { data } = await supabase
-      .from('turnos')
-      .select('fecha, hora_fin')
-      .eq('socio_dni', dniCheck)
-      .eq('estado', 'ocupado')
-      .gte('fecha', today);
+    // Buscamos tanto si es titular (socio_dni) como si es acompañante (acompanante ilike)
+    const [reqTitular, reqAcom] = await Promise.all([
+      supabase.from('turnos').select('fecha, hora_fin').eq('socio_dni', dniCheck).eq('estado', 'ocupado').gte('fecha', today),
+      supabase.from('turnos').select('fecha, hora_fin').ilike('acompanante', `%${nameStr}%`).eq('estado', 'ocupado').gte('fecha', today)
+    ]);
+    
+    const data = [...(reqTitular.data || []), ...(reqAcom.data || [])];
     
     if (!data || data.length === 0) return false;
 
