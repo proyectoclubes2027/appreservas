@@ -55,11 +55,30 @@ export default function ReportesAdmin() {
         return { ...s, reservasMes, reservasTotales };
       }).filter(s => s.reservasTotales > 0).sort((a, b) => b.reservasMes - a.reservasMes);
 
+      // Ranking de Invitado (anual)
+      const currentYearStr = new Date().getFullYear().toString();
+      const startOfYear = `${currentYearStr}-01-01`;
+      const endOfYear = `${currentYearStr}-12-31`;
+      
+      const { data: turnosInvitado } = await supabase
+        .from('turnos')
+        .select('socio_dni')
+        .gte('fecha', startOfYear)
+        .lte('fecha', endOfYear)
+        .ilike('acompanante', '%Especial, I.%')
+        .neq('estado', 'libre');
+
+      const rankingInvitado = socios.map(s => {
+        const cant = (turnosInvitado || []).filter(t => t.socio_dni === s.dni).length;
+        return { ...s, reservasInvitado: cant };
+      }).filter(s => s.reservasInvitado > 0).sort((a, b) => b.reservasInvitado - a.reservasInvitado);
+
       setStats({
         totalReservas,
         canchasStats,
         topHora: topHora ? topHora[0] : 'N/A',
-        rankingSocios
+        rankingSocios,
+        rankingInvitado
       });
     } catch (err) {
       console.error(err);
@@ -116,8 +135,39 @@ export default function ReportesAdmin() {
                     {s.apellido}, {s.nombre}
                   </p>
                   <div className="flex gap-6">
-                    <p className="w-16 text-center font-bold text-primary">{s.reservasMes}</p>
-                    <p className="w-16 text-center text-textSec text-xs">{s.reservasTotales}</p>
+                     <p className="w-16 text-center font-bold text-primary">{s.reservasMes}</p>
+                     <p className="w-16 text-center text-textSec text-xs">{s.reservasTotales}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-surface border border-border rounded-xl p-4">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-textSec mb-4 px-1">Uso de Invitado por Socio (Este Año)</h3>
+        
+        <div className="flex flex-col gap-2">
+          {stats.rankingInvitado.length === 0 ? (
+            <p className="text-center py-4 text-textSec text-sm">Nadie ha reservado con el invitado este año.</p>
+          ) : (
+            <div className="border border-border rounded-lg overflow-hidden bg-[#0d0d0d]">
+              <div className="flex items-center justify-between p-3 bg-white/5 border-b border-border text-[10px] font-bold uppercase text-textSec">
+                <span>Socio</span>
+                <span className="w-24 text-center">Cant. Reservas</span>
+              </div>
+              
+              {stats.rankingInvitado.map((s: any, idx: number) => (
+                <div 
+                  key={s.dni} 
+                  className={`flex flex-row items-center justify-between p-3 ${idx !== 0 ? 'border-t border-border' : ''} hover:bg-white/5 transition-colors`}
+                >
+                  <p className="font-medium text-sm text-textPri truncate">
+                    {s.apellido}, {s.nombre}
+                  </p>
+                  <div className="flex justify-center w-24">
+                     <p className={`font-bold ${s.reservasInvitado >= 5 ? 'text-blocked' : 'text-primary'}`}>{s.reservasInvitado}</p>
                   </div>
                 </div>
               ))}

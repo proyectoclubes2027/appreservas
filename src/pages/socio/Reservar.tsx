@@ -228,12 +228,40 @@ export default function Reservar() {
       if (comp3) participants.push(comp3);
     }
 
+    if (participants.length < 2) {
+      alert("Debes seleccionar al menos un compañero para poder reservar.");
+      setReservingLocal(false);
+      return;
+    }
+
     // Check uniqueness explicitly to avoid a single person twice
     const uniqueParticipants = Array.from(new Set(participants));
     if (uniqueParticipants.length !== participants.length) {
       alert("Has seleccionado al mismo jugador repetidas veces.");
       setReservingLocal(false);
       return;
+    }
+
+    // Validate Invitado limit (max 5 per year per titular)
+    if (participants.includes('123987456')) {
+      const currentYearStr = new Date().getFullYear().toString();
+      const startOfYear = `${currentYearStr}-01-01`;
+      const endOfYear = `${currentYearStr}-12-31`;
+
+      const { data: invitadoData, error: invitadoError } = await supabase
+        .from('turnos')
+        .select('id')
+        .eq('socio_dni', socio.dni)
+        .gte('fecha', startOfYear)
+        .lte('fecha', endOfYear)
+        .ilike('acompanante', '%Especial, I.%')
+        .neq('estado', 'libre');
+
+      if (!invitadoError && invitadoData && invitadoData.length >= 5) {
+        alert("Has alcanzado el límite de 5 reservas anuales con un Invitado.");
+        setReservingLocal(false);
+        return;
+      }
     }
 
     // Validate rules: Max 1 active for EVERY participant, and no participant can be moroso
