@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { SHIFTS } from '../../lib/constants';
@@ -7,6 +7,7 @@ import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { loginOneSignal } from '../../lib/onesignal';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const isValidUuid = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -16,6 +17,9 @@ const isValidUuid = (value: any): boolean => {
 
 export default function Reservar() {
   const { socio } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const hasProcessedEditRef = useRef(false);
   const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
   const [turnosData, setTurnosData] = useState<any[]>([]);
   const [canchasList, setCanchasList] = useState<any[]>([]);
@@ -36,6 +40,9 @@ export default function Reservar() {
   
   // State for shift details modal
   const [infoTurno, setInfoTurno] = useState<any>(null);
+  
+  // State for edit mode
+  const [editTurnoId, setEditTurnoId] = useState<string | null>(null);
 
   const dates = Array.from({ length: 7 }).map((_, i) => addDays(startOfDay(new Date()), i));
 
@@ -47,6 +54,27 @@ export default function Reservar() {
     };
     initPage();
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (location.state?.editTurno && !hasProcessedEditRef.current && sociosList.length > 0) {
+      const turno = location.state.editTurno;
+      const tDate = parseISO(turno.fecha);
+      setSelectedDate(startOfDay(tDate));
+      
+      setSelectedShift({ start: turno.hora_inicio.slice(0,5), end: turno.hora_fin.slice(0,5) });
+      setModalCanchaId(turno.cancha_id);
+      setTipoJuego('single');
+      setComp1('');
+      setComp2('');
+      setComp3('');
+      setEditTurnoId(turno.id);
+      setIsModalOpen(true);
+      
+      hasProcessedEditRef.current = true;
+      // Clear state so it doesn't reopen if they refresh
+      navigate('/reservar', { replace: true, state: {} });
+    }
+  }, [location.state, sociosList]);
 
   const fetchTurnos = async () => {
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -170,7 +198,7 @@ export default function Reservar() {
   };
 
 
-  const hasActiveTurno = async (dniCheck: string) => {
+  const hasActiveTurno = async (dniCheck: string, ignoreTurnoId?: string) => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const nowHour = format(new Date(), 'HH:mm');
     
@@ -186,7 +214,7 @@ export default function Reservar() {
       supabase.from('turnos').select('fecha, hora_fin').ilike('acompanante', `%${nameStr}%`).eq('estado', 'ocupado').gte('fecha', today)
     ]);
     
-    const data = [...(reqTitular.data || []), ...(reqAcom.data || [])];
+    const data = [...(reqTitular.data || []), ...(reqAcom.data || [])].filter(t => t.id !== ignoreTurnoId);
     
     if (!data || data.length === 0) return false;
 
@@ -208,6 +236,20 @@ export default function Reservar() {
     setComp1('');
     setComp2('');
     setComp3('');
+    setEditTurnoId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditClick = () => {
+    if (!infoTurno) return;
+    setSelectedShift(infoTurno.shift);
+    setModalCanchaId(infoTurno.cancha_id);
+    setTipoJuego('single');
+    setComp1('');
+    setComp2('');
+    setComp3('');
+    setEditTurnoId(infoTurno.id);
+    setInfoTurno(null);
     setIsModalOpen(true);
   };
 
@@ -273,7 +315,7 @@ export default function Reservar() {
         return;
       }
 
-      const active = await hasActiveTurno(d);
+      const active = await hasActiveTurno(d, editTurnoId || undefined);
       if (active) {
         const sObj = s || socio;
         alert(`Error: El jugador ${sObj.apellido}, ${sObj.nombre} ya tiene un turno activo. Debe cancelarlo antes de reservar o integrar otra partida.`);
@@ -536,7 +578,7 @@ export default function Reservar() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-[#0d0d0d]/80 z-50 flex items-start justify-center p-4 overflow-y-auto">
           <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm my-auto overflow-visible">
-            <h3 className="text-lg font-bold mb-4">Confirmar Reserva</h3>
+            <h3 className="text-lg font-bold mb-4">{editTurnoId ? 'Editar Reserva' : 'Confirmar Reserva'}</h3>
             <p className="text-sm mb-4 text-textSec border-b border-border pb-4">
               Cancha {modalCanchaId} • {format(selectedDate, 'dd/MM/yyyy')} • {selectedShift?.start}hs
             </p>
@@ -589,7 +631,7 @@ export default function Reservar() {
             <div className="flex gap-3">
               <Button variant="secondary" fullWidth onClick={() => setIsModalOpen(false)}>Cancelar</Button>
               <Button variant="primary" fullWidth onClick={confirmReservation} disabled={reservingLocal}>
-                {reservingLocal ? 'Reservando...' : 'Reservar'}
+                {reservingLocal ? 'Procesando...' : (editTurnoId ? 'Guardar Cambios' : 'Reservar')}
               </Button>
             </div>
           </div>
@@ -630,9 +672,14 @@ export default function Reservar() {
                       </Button>
                     )}
                     {isMio && (
-                      <Button variant="danger" fullWidth onClick={() => cancelTurno(infoTurno)} disabled={reservingLocal}>
-                        {reservingLocal ? 'Procesando...' : 'Cancelar Reserva'}
-                      </Button>
+                      <div className="flex gap-2 w-full">
+                        <Button variant="secondary" fullWidth onClick={handleEditClick} disabled={reservingLocal}>
+                          Editar Compañeros
+                        </Button>
+                        <Button variant="danger" fullWidth onClick={() => cancelTurno(infoTurno)} disabled={reservingLocal}>
+                          {reservingLocal ? 'Procesando...' : 'Cancelar'}
+                        </Button>
+                      </div>
                     )}
                     <Button variant="secondary" fullWidth onClick={() => setInfoTurno(null)}>Cerrar</Button>
                   </div>

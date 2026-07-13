@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
+import { useNavigate } from 'react-router-dom';
 
 const isValidUuid = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -13,6 +14,7 @@ const isValidUuid = (value: any): boolean => {
 
 export default function MisTurnos() {
   const { socio } = useAuth();
+  const navigate = useNavigate();
   const [turnos, setTurnos] = useState<any[]>([]);
   const [loadingLocal, setLoadingLocal] = useState(true);
 
@@ -124,9 +126,14 @@ export default function MisTurnos() {
                 </div>
                 
                 {isFuture && turno.estado === 'ocupado' ? (
-                  <Button variant="danger" className="text-xs px-4 py-2" onClick={() => cancelTurno(turno)}>
-                    Cancelar
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button variant="secondary" className="text-xs px-4 py-2" onClick={() => navigate('/reservar', { state: { editTurno: turno } })}>
+                      Editar
+                    </Button>
+                    <Button variant="danger" className="text-xs px-4 py-2" onClick={() => cancelTurno(turno)}>
+                      Cancelar
+                    </Button>
+                  </div>
                 ) : (
                   <span className="text-xs text-textSec px-2 py-1 bg-[#0d0d0d] rounded border border-[#2a2a2a] uppercase font-bold">
                     Completado

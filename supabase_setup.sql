@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS socios (
     apellido TEXT NOT NULL,
     activo BOOLEAN DEFAULT true,
     email TEXT,
+    telefono TEXT,
+    datos_confirmados BOOLEAN DEFAULT false,
     rol TEXT DEFAULT 'socio' CHECK (rol IN ('socio', 'admin')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
