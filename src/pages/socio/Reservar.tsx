@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { SHIFTS } from '../../lib/constants';
-import { format, addDays, startOfDay } from 'date-fns';
+import { format, addDays, startOfDay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
@@ -210,8 +210,8 @@ export default function Reservar() {
     // Obtenemos los turnos del jugador desde hoy en adelante que estén OCUPADOS
     // Buscamos tanto si es titular (socio_dni) como si es acompañante (acompanante ilike)
     const [reqTitular, reqAcom] = await Promise.all([
-      supabase.from('turnos').select('fecha, hora_fin').eq('socio_dni', dniCheck).eq('estado', 'ocupado').gte('fecha', today),
-      supabase.from('turnos').select('fecha, hora_fin').ilike('acompanante', `%${nameStr}%`).eq('estado', 'ocupado').gte('fecha', today)
+      supabase.from('turnos').select('id, fecha, hora_fin').eq('socio_dni', dniCheck).eq('estado', 'ocupado').gte('fecha', today),
+      supabase.from('turnos').select('id, fecha, hora_fin').ilike('acompanante', `%${nameStr}%`).eq('estado', 'ocupado').gte('fecha', today)
     ]);
     
     const data = [...(reqTitular.data || []), ...(reqAcom.data || [])].filter(t => t.id !== ignoreTurnoId);
