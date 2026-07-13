@@ -7,8 +7,8 @@ import { AlertCircle } from 'lucide-react';
 
 export function ProfileCompletionModal() {
   const { socio } = useAuth();
-  const [telefono, setTelefono] = useState('');
-  const [email, setEmail] = useState('');
+  const [telefono, setTelefono] = useState(socio?.telefono || '');
+  const [email, setEmail] = useState(socio?.email || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,7 +32,7 @@ export function ProfileCompletionModal() {
     try {
       const { error: updateError } = await supabase
         .from('socios')
-        .update({ telefono, email })
+        .update({ telefono, email, datos_confirmados: true })
         .eq('id', socio.id);
 
       if (updateError) {
@@ -62,11 +62,11 @@ export function ProfileCompletionModal() {
           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
             <AlertCircle className="text-primary w-5 h-5" />
           </div>
-          <h2 className="text-xl font-bold text-white">Actualizá tus datos</h2>
+          <h2 className="text-xl font-bold text-white">Confirma tus datos</h2>
         </div>
         
         <p className="text-sm text-textSec mb-6 leading-relaxed">
-          Para que el sistema de reservas y avisos funcione correctamente, necesitamos que ingreses tu número de celular y tu correo electrónico **real**.
+          Para que el sistema de reservas y avisos funcione correctamente, por favor verifica o actualiza tu número de celular y correo electrónico.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -90,7 +90,7 @@ export function ProfileCompletionModal() {
           {error && <p className="text-blocked text-sm text-center font-medium bg-blocked/10 p-2 rounded">{error}</p>}
 
           <Button type="submit" fullWidth disabled={loading || !telefono || !email} className="mt-2">
-            {loading ? 'Guardando...' : 'Guardar Datos'}
+            {loading ? 'Guardando...' : 'Confirmar Datos'}
           </Button>
         </form>
       </div>

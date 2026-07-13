@@ -19,8 +19,8 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const isSocio = socio?.rol === 'socio';
   const isAdmin = socio?.rol === 'admin';
   
-  // Condición para bloquear si falta completamiento (solo aplica a socios)
-  const isProfileIncomplete = isSocio && (!socio.telefono || !socio.email || socio.email === '');
+  // Condición para bloquear si falta confirmar los datos o si están vacíos (solo aplica a socios)
+  const isProfileIncomplete = isSocio && !socio.datos_confirmados;
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
