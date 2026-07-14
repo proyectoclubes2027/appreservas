@@ -94,7 +94,6 @@ export default function Reservar() {
       const { data: sociosData, error: sociosError } = await supabase
         .from('socios')
         .select('id, dni, nombre, apellido, categoria, rol, fecha_alta')
-        .eq('activo', true)
         .eq('estado', 'activo')
         .order('apellido', { ascending: true });
 

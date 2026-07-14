@@ -57,11 +57,12 @@ export default function SociosAdmin() {
   };
 
   const handleSave = async () => {
+    const dataToSave = { ...formData, estado: formData.activo ? 'activo' : 'inactivo' };
     if (editingId) {
-      const { error } = await supabase.from('socios').update(formData).eq('id', editingId);
+      const { error } = await supabase.from('socios').update(dataToSave).eq('id', editingId);
       if (error) alert(error.message);
     } else {
-      const { error } = await supabase.from('socios').insert(formData);
+      const { error } = await supabase.from('socios').insert(dataToSave);
       if (error) alert(error.message);
     }
     setIsModalOpen(false);
@@ -76,7 +77,7 @@ export default function SociosAdmin() {
 
 
   const toggleActivo = async (id: string, current: boolean) => {
-    await supabase.from('socios').update({ activo: !current }).eq('id', id);
+    await supabase.from('socios').update({ activo: !current, estado: !current ? 'activo' : 'inactivo' }).eq('id', id);
     fetchSocios();
   };
 

@@ -76,7 +76,7 @@ export default function Login() {
         throw new Error('Error al verificar socio: ' + checkError.message);
       }
 
-      if (socioCheck && (socioCheck.activo === false || socioCheck.estado === 'inactivo')) {
+      if (socioCheck && socioCheck.estado === 'inactivo') {
         setError('Usuario inactivo. Comunicarse con la Sub Comisión de Tenis.');
         return;
       }
