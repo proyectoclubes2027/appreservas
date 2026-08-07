@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         mesesDeuda = Math.max(0, mesesDeuda);
-        isMoroso = mesesDeuda >= 2;
+        isMoroso = mesesDeuda >= 4;
       }
 
       setSocio({ ...socioData, isMoroso, mesesDeuda } as Socio);

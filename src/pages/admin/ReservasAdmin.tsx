@@ -62,7 +62,7 @@ export default function ReservasAdmin() {
             hora_fin: shift.end,
             estado: 'bloqueado',
             motivo_bloqueo: massBlockMotivo || 'Clima / Mantenimiento',
-            socio_dni: null,
+            socio_dni: socio?.dni,
             acompanante: null
           });
 
