@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           mesesDeuda = (yA - fy) * 12 + (mA - fm);
         }
 
-        mesesDeuda = Math.max(0, mesesDeuda);
+        mesesDeuda = Math.max(0, mesesDeuda - 1);
         isMoroso = mesesDeuda >= 4;
       }
 

@@ -162,7 +162,7 @@ export default function Reservar() {
           mesesAdeudados = (yA - fy) * 12 + (mA - fm);
         }
 
-        mesesAdeudados = Math.max(0, mesesAdeudados);
+        mesesAdeudados = Math.max(0, mesesAdeudados - 1);
 
         return {
           ...s,
@@ -254,7 +254,7 @@ export default function Reservar() {
 
   const confirmReservation = async () => {
     if (!socio) return;
-    if (socio?.isMoroso) {
+    if ((socio?.mesesDeuda ?? 0) >= 4) {
       alert(`No puedes reservar: Posees una deuda de ${socio.mesesDeuda} meses. Por favor, regulariza tu situación.`);
       return;
     }
@@ -308,7 +308,7 @@ export default function Reservar() {
     // Validate rules: Max 1 active for EVERY participant, and no participant can be moroso
     for (const d of participants) {
       const s = sociosList.find(x => x.dni === d) || (d === socio.dni ? socio : null);
-      if (s?.isMoroso) {
+      if ((s?.mesesDeuda ?? 0) >= 4) {
         alert(`Error: El jugador ${s.apellido}, ${s.nombre} posee una deuda de ${s.mesesDeuda} meses. No puede registrar reservas.`);
         setReservingLocal(false);
         return;
@@ -466,7 +466,7 @@ export default function Reservar() {
 
     const handleClick = () => {
       if (isVencido) return;
-      if (socio?.isMoroso) {
+      if ((socio?.mesesDeuda ?? 0) >= 4) {
          alert("Posees meses impagos. Por favor regulariza tu situación para reservar.");
          return;
       }
@@ -536,7 +536,7 @@ export default function Reservar() {
           <p className="text-center text-textSec py-10">Cargando...</p>
         ) : (
           <>
-            {socio?.isMoroso && (
+            {((socio?.mesesDeuda ?? 0) >= 4) && (
               <div className="bg-[#1a0f0f] border-2 border-blocked text-[#e8a3a3] p-5 rounded-xl mb-6 flex flex-col gap-4 shadow-[0_0_15px_rgba(239,68,68,0.15)] relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blocked/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
                 <div className="flex flex-col gap-1 relative z-10">
