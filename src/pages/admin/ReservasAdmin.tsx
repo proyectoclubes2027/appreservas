@@ -35,7 +35,14 @@ export default function ReservasAdmin() {
   // States for detail modal
   const [infoTurno, setInfoTurno] = useState<any>(null);
 
-  const dates = Array.from({ length: 7 }).map((_, i) => addDays(startOfDay(new Date()), i));
+  const today = startOfDay(new Date());
+  let dates = Array.from({ length: 7 }).map((_, i) => addDays(today, i));
+  
+  // Ensure selectedDate is in the visible list
+  if (!dates.some(d => d.getTime() === selectedDate.getTime())) {
+    dates.push(selectedDate);
+    dates.sort((a, b) => a.getTime() - b.getTime());
+  }
 
   useEffect(() => {
     const initPage = async () => {
@@ -99,6 +106,52 @@ export default function ReservasAdmin() {
       setMassBlockStartHour('10:00');
     }
     setMassBlockLoading(false);
+  };
+
+  const handleUnblockSundays = async () => {
+    if (!confirm("¿Estás seguro de que quieres desbloquear TODOS los turnos bloqueados que caen en días Domingo de acá en adelante?")) return;
+    
+    setLoadingLocal(true);
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    
+    // Obtener turnos bloqueados desde hoy
+    const { data: turnos, error: fetchError } = await supabase
+      .from('turnos')
+      .select('id, fecha')
+      .eq('estado', 'bloqueado')
+      .gte('fecha', todayStr);
+
+    if (fetchError) {
+      alert("Error al obtener turnos: " + fetchError.message);
+      setLoadingLocal(false);
+      return;
+    }
+
+    const turnosDomingo = turnos.filter(turno => {
+      const [y, m, d] = turno.fecha.split('-');
+      const date = new Date(Number(y), Number(m) - 1, Number(d));
+      return date.getDay() === 0;
+    });
+
+    if (turnosDomingo.length === 0) {
+      alert("No se encontraron domingos bloqueados.");
+      setLoadingLocal(false);
+      return;
+    }
+
+    const idsToDelete = turnosDomingo.map(t => t.id);
+    const { error: deleteError } = await supabase
+      .from('turnos')
+      .delete()
+      .in('id', idsToDelete);
+
+    if (deleteError) {
+      alert("Error al eliminar: " + deleteError.message);
+    } else {
+      alert(`¡Se han desbloqueado ${idsToDelete.length} turnos exitosamente!`);
+      fetchTurnos();
+    }
+    setLoadingLocal(false);
   };
 
   const fetchTurnos = async () => {
@@ -291,10 +344,15 @@ export default function ReservasAdmin() {
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center bg-surface p-4 rounded-xl border border-border mt-2">
         <h2 className="text-xl font-bold uppercase tracking-wide text-textSec m-0">Gestión de Reservas</h2>
-        <Button variant="danger" onClick={() => setIsMassBlockModalOpen(true)} className="flex items-center gap-2 shadow-sm text-xs sm:text-sm shadow-danger/20">
-          <span className="hidden sm:inline">⛈️ Bloqueo Masivo</span>
-          <span className="inline sm:hidden">⛈️ Bloquear Día</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={handleUnblockSundays} className="flex items-center gap-2 shadow-sm text-xs sm:text-sm">
+            <span>Desbloquear Domingos</span>
+          </Button>
+          <Button variant="danger" onClick={() => setIsMassBlockModalOpen(true)} className="flex items-center gap-2 shadow-sm text-xs sm:text-sm shadow-danger/20">
+            <span className="hidden sm:inline">⛈️ Bloqueo Masivo</span>
+            <span className="inline sm:hidden">⛈️ Bloquear Día</span>
+          </Button>
+        </div>
       </div>
 
       {/* Date Selector */}
@@ -316,6 +374,26 @@ export default function ReservasAdmin() {
             </button>
           );
         })}
+        
+        {/* Date Picker Arbitrario */}
+        <div className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-xl border-2 border-[#2a2a2a] bg-[#161616] relative overflow-hidden transition-colors hover:border-primary/50 group">
+          <input 
+            type="date" 
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            onChange={(e) => {
+              if (e.target.value) {
+                const [y, m, d] = e.target.value.split('-');
+                setSelectedDate(new Date(Number(y), Number(m) - 1, Number(d)));
+              }
+            }}
+          />
+          <div className="flex flex-col items-center justify-center pointer-events-none text-textPri group-hover:text-primary transition-colors">
+            <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-textSec group-hover:text-primary">
+              MÁS
+            </span>
+            <span className="text-xl">📅</span>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col gap-8">
