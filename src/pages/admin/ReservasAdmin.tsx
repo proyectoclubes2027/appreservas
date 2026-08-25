@@ -154,6 +154,52 @@ export default function ReservasAdmin() {
     setLoadingLocal(false);
   };
 
+  const handleUnblockSaturdays = async () => {
+    if (!confirm("¿Estás seguro de que quieres desbloquear TODOS los turnos bloqueados que caen en días Sábado de acá en adelante?")) return;
+    
+    setLoadingLocal(true);
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    
+    // Obtener turnos bloqueados desde hoy
+    const { data: turnos, error: fetchError } = await supabase
+      .from('turnos')
+      .select('id, fecha')
+      .eq('estado', 'bloqueado')
+      .gte('fecha', todayStr);
+
+    if (fetchError) {
+      alert("Error al obtener turnos: " + fetchError.message);
+      setLoadingLocal(false);
+      return;
+    }
+
+    const turnosSabado = turnos.filter(turno => {
+      const [y, m, d] = turno.fecha.split('-');
+      const date = new Date(Number(y), Number(m) - 1, Number(d));
+      return date.getDay() === 6; // Sábado
+    });
+
+    if (turnosSabado.length === 0) {
+      alert("No se encontraron sábados bloqueados.");
+      setLoadingLocal(false);
+      return;
+    }
+
+    const idsToDelete = turnosSabado.map(t => t.id);
+    const { error: deleteError } = await supabase
+      .from('turnos')
+      .delete()
+      .in('id', idsToDelete);
+
+    if (deleteError) {
+      alert("Error al eliminar: " + deleteError.message);
+    } else {
+      alert(`¡Se han desbloqueado ${idsToDelete.length} turnos exitosamente!`);
+      fetchTurnos();
+    }
+    setLoadingLocal(false);
+  };
+
   const fetchTurnos = async () => {
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const { data, error } = await supabase
@@ -344,9 +390,14 @@ export default function ReservasAdmin() {
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center bg-surface p-4 rounded-xl border border-border mt-2">
         <h2 className="text-xl font-bold uppercase tracking-wide text-textSec m-0">Gestión de Reservas</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-end">
+          <Button variant="secondary" onClick={handleUnblockSaturdays} className="flex items-center gap-2 shadow-sm text-xs sm:text-sm">
+            <span className="hidden sm:inline">Desbloquear Sábados</span>
+            <span className="inline sm:hidden">Desbloq. Sáb.</span>
+          </Button>
           <Button variant="secondary" onClick={handleUnblockSundays} className="flex items-center gap-2 shadow-sm text-xs sm:text-sm">
-            <span>Desbloquear Domingos</span>
+            <span className="hidden sm:inline">Desbloquear Domingos</span>
+            <span className="inline sm:hidden">Desbloq. Dom.</span>
           </Button>
           <Button variant="danger" onClick={() => setIsMassBlockModalOpen(true)} className="flex items-center gap-2 shadow-sm text-xs sm:text-sm shadow-danger/20">
             <span className="hidden sm:inline">⛈️ Bloqueo Masivo</span>

@@ -119,7 +119,6 @@ export default function Reservar() {
       const ultimoPagoMap = new Map<string, string>();
       if (pagosData) {
         for (const pago of pagosData) {
-          // El campo puede ser 'mesPagado' o 'mespagado' según PostgREST
           const mesPagado: string = pago.mesPagado ?? pago.mespagado ?? '';
           if (!mesPagado) continue;
           const socioId: string = pago.socio_id;
@@ -130,15 +129,36 @@ export default function Reservar() {
         }
       }
 
+      // Fetch cuotas para tener en cuenta la deuda real cargada
+      const { data: cuotasData, error: cuotasError } = await supabase
+        .from('cuotas')
+        .select('socio_id, estado, mes');
+
+      const cuotasPendientesMap = new Map<string, number>();
+      const debeMesActualMap = new Map<string, boolean>();
+      
       const ahora = new Date();
       let yA = ahora.getFullYear();
       let mA = ahora.getMonth() + 1;
-
+      
       if (ahora.getDate() < 15) {
         mA -= 1;
         if (mA === 0) {
           mA = 12;
           yA -= 1;
+        }
+      }
+      
+      const mesActualStr = `${yA}-${String(mA).padStart(2, "0")}`;
+
+      if (cuotasData && !cuotasError) {
+        for (const c of cuotasData) {
+          if (c.estado === 'pendiente') {
+            cuotasPendientesMap.set(c.socio_id, (cuotasPendientesMap.get(c.socio_id) || 0) + 1);
+            if (c.mes === mesActualStr) {
+              debeMesActualMap.set(c.socio_id, true);
+            }
+          }
         }
       }
 
@@ -149,20 +169,30 @@ export default function Reservar() {
         }
 
         const ultimoPago = ultimoPagoMap.get(s.id);
-        let mesesAdeudados = 0;
+        let mesesAdeudadosVirtuales = 0;
 
         if (ultimoPago) {
-          // mesPagado es 'YYYY-MM', calcular meses desde el último pago
           const [y, m] = ultimoPago.split('-').map(Number);
-          mesesAdeudados = (yA - y) * 12 + (mA - m);
+          mesesAdeudadosVirtuales = (yA - y) * 12 + (mA - m);
         } else if (s.fecha_alta) {
-          // Parsear fecha_alta como fecha local usando YYYY-MM-DD para evitar timezone offset
-          const fechaStr = String(s.fecha_alta).substring(0, 10); // 'YYYY-MM-DD'
+          const fechaStr = String(s.fecha_alta).substring(0, 10);
           const [fy, fm] = fechaStr.split('-').map(Number);
-          mesesAdeudados = (yA - fy) * 12 + (mA - fm);
+          mesesAdeudadosVirtuales = (yA - fy) * 12 + (mA - fm);
         }
 
-        mesesAdeudados = Math.max(0, mesesAdeudados - 1);
+        // Deuda física (tabla cuotas)
+        let mesesAdeudadosFisicos = cuotasPendientesMap.get(s.id) || 0;
+        
+        // Usamos el mayor entre el cálculo físico y el virtual para no perder deuda manual
+        let mesesAdeudados = Math.max(mesesAdeudadosVirtuales, mesesAdeudadosFisicos);
+
+        // Tolerancia del mes actual (si lo debe, se le perdona 1 mes)
+        const debeMesVirtual = mesesAdeudadosVirtuales > 0;
+        const debeMesFisico = debeMesActualMap.get(s.id) || false;
+        
+        if (debeMesVirtual || debeMesFisico) {
+            mesesAdeudados = Math.max(0, mesesAdeudados - 1);
+        }
 
         return {
           ...s,
@@ -309,7 +339,7 @@ export default function Reservar() {
     for (const d of participants) {
       const s = sociosList.find(x => x.dni === d) || (d === socio.dni ? socio : null);
       if ((s?.mesesDeuda ?? 0) >= 4) {
-        alert(`Error: El jugador ${s.apellido}, ${s.nombre} posee una deuda de ${s.mesesDeuda} meses. No puede registrar reservas.`);
+        alert(`El jugador ${s.apellido}, ${s.nombre} no puede reservar turnos`);
         setReservingLocal(false);
         return;
       }
