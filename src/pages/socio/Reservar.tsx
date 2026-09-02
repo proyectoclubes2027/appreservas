@@ -90,11 +90,12 @@ export default function Reservar() {
 
   const fetchSocios = async () => {
     try {
-      // Fetch socios activos
+      // Fetch socios activos (excluyendo admins)
       const { data: sociosData, error: sociosError } = await supabase
         .from('socios')
         .select('id, dni, nombre, apellido, categoria, rol, fecha_alta')
         .eq('estado', 'activo')
+        .neq('rol', 'admin')
         .order('apellido', { ascending: true });
 
       if (sociosError) {
