@@ -45,11 +45,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Banner de notificaciones (solo si el perfil está completo) */}
       {isSocio && !isProfileIncomplete && <NotificationBanner />}
 
-      {/* Banner informativo de Validación QR */}
-      {isSocio && !isProfileIncomplete && <QRAnnouncementBanner />}
-
       {/* Main Content */}
       <main className={`flex-1 overflow-y-auto pb-20 p-4 ${isProfileIncomplete ? 'pointer-events-none blur-sm' : ''}`}>
+        {/* Banner informativo de Validación QR */}
+        {isSocio && !isProfileIncomplete && <QRAnnouncementBanner />}
         {children}
       </main>
 
