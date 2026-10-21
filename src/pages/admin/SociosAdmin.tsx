@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { ShieldAlert } from 'lucide-react';
+import { PenalizacionesModal } from '../../components/PenalizacionesModal';
 
 export default function SociosAdmin() {
   const [socios, setSocios] = useState<any[]>([]);
   const [loadingLocal, setLoadingLocal] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'todos' | 'activos' | 'inactivos'>('todos');
+  const [isPenalizacionesOpen, setIsPenalizacionesOpen] = useState(false);
 
   const exportToCSV = () => {
     const headers = ['DNI', 'Apellido', 'Nombre', 'Email', 'Rol', 'Activo'];
@@ -96,6 +99,14 @@ export default function SociosAdmin() {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold uppercase tracking-wide text-textSec">Gestión de Socios</h2>
         <div className="flex gap-2">
+          <Button 
+            variant="secondary" 
+            className="text-xs px-3 py-2 text-amber-400 hover:text-amber-300 border border-amber-500/40 flex items-center gap-1.5" 
+            onClick={() => setIsPenalizacionesOpen(true)}
+          >
+            <ShieldAlert size={15} />
+            Sanciones Activas
+          </Button>
           <Button variant="secondary" className="text-xs px-3 py-2" onClick={exportToCSV}>
             📥 Exportar CSV
           </Button>
@@ -207,6 +218,12 @@ export default function SociosAdmin() {
           </div>
         </div>
       )}
+
+      {/* Modal para Levantar Sanciones */}
+      <PenalizacionesModal
+        isOpen={isPenalizacionesOpen}
+        onClose={() => setIsPenalizacionesOpen(false)}
+      />
     </div>
   );
 }

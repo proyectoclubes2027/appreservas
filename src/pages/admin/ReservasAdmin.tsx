@@ -5,9 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
 import { SHIFTS } from '../../lib/constants';
-import { Settings } from 'lucide-react';
+import { Settings, ShieldAlert } from 'lucide-react';
 import { useClubConfig } from '../../lib/useClubConfig';
 import { ClubConfigModal } from '../../components/ClubConfigModal';
+import { PenalizacionesModal } from '../../components/PenalizacionesModal';
 
 const isValidUuid = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -41,6 +42,7 @@ export default function ReservasAdmin() {
   // States for Club Config
   const { config, updateConfig } = useClubConfig();
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [isPenalizacionesModalOpen, setIsPenalizacionesModalOpen] = useState(false);
 
   const today = startOfDay(new Date());
   let dates = Array.from({ length: 7 }).map((_, i) => addDays(today, i));
@@ -410,6 +412,16 @@ export default function ReservasAdmin() {
             <span className="hidden sm:inline">⛈️ Bloqueo Masivo</span>
             <span className="inline sm:hidden">⛈️ Bloquear Día</span>
           </Button>
+          <Button 
+            variant="secondary" 
+            onClick={() => setIsPenalizacionesModalOpen(true)} 
+            className="flex items-center gap-1.5 shadow-sm text-xs sm:text-sm text-amber-400 hover:text-amber-300 border-amber-500/40"
+            title="Ver y levantar sanciones"
+          >
+            <ShieldAlert size={16} />
+            <span className="hidden sm:inline">Sanciones</span>
+            <span className="inline sm:hidden">Sanciones</span>
+          </Button>
           <Button variant="primary" onClick={() => setIsConfigModalOpen(true)} className="flex items-center gap-1.5 shadow-sm text-xs sm:text-sm font-bold">
             <Settings size={16} />
             <span className="hidden sm:inline">Reglas & QR</span>
@@ -619,6 +631,16 @@ export default function ReservasAdmin() {
         onClose={() => setIsConfigModalOpen(false)}
         config={config}
         onSave={updateConfig}
+        onOpenPenalizaciones={() => {
+          setIsConfigModalOpen(false);
+          setIsPenalizacionesModalOpen(true);
+        }}
+      />
+
+      {/* Modal para Levantar Sanciones */}
+      <PenalizacionesModal
+        isOpen={isPenalizacionesModalOpen}
+        onClose={() => setIsPenalizacionesModalOpen(false)}
       />
     </div>
   );

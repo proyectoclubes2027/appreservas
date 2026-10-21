@@ -8,6 +8,7 @@ interface ClubConfigModalProps {
   onClose: () => void;
   config: ClubConfig;
   onSave: (newConfig: Partial<ClubConfig>) => Promise<{ success: boolean; error?: string }>;
+  onOpenPenalizaciones?: () => void;
 }
 
 export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
@@ -15,6 +16,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
   onClose,
   config,
   onSave,
+  onOpenPenalizaciones,
 }) => {
   const [qrActivo, setQrActivo] = useState(config.validacion_qr_activa);
   const [diasAnticipacion, setDiasAnticipacion] = useState(config.dias_anticipacion || 2);
@@ -165,6 +167,19 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
               </span>
             </div>
           </div>
+
+          {onOpenPenalizaciones && (
+            <div className="pt-2 border-t border-[#2a2a2a]">
+              <button
+                type="button"
+                onClick={onOpenPenalizaciones}
+                className="w-full py-2.5 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+              >
+                <ShieldAlert size={15} />
+                Ver y Levantar Sanciones a Socios Inhabilitados
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
