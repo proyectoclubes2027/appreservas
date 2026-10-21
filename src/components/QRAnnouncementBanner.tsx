@@ -1,21 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { QrCode, Sparkles, RefreshCw, X, ShieldAlert } from 'lucide-react';
 
 export const QRAnnouncementBanner: React.FC = () => {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    const dismissedUntil = localStorage.getItem('dismissed_qr_banner_date');
-    const today = new Date().toISOString().slice(0, 10);
-    if (dismissedUntil !== today) {
-      setShow(true);
-    }
-  }, []);
-
   const handleDismiss = () => {
-    const today = new Date().toISOString().slice(0, 10);
-    localStorage.setItem('dismissed_qr_banner_date', today);
     setShow(false);
   };
 
