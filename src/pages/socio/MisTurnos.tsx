@@ -5,6 +5,9 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
+import { QrCode, CheckCircle2 } from 'lucide-react';
+import { QRScannerModal } from '../../components/QRScannerModal';
+import { useClubConfig } from '../../lib/useClubConfig';
 
 const isValidUuid = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -15,8 +18,12 @@ const isValidUuid = (value: any): boolean => {
 export default function MisTurnos() {
   const { socio } = useAuth();
   const navigate = useNavigate();
+  const { config } = useClubConfig();
   const [turnos, setTurnos] = useState<any[]>([]);
   const [loadingLocal, setLoadingLocal] = useState(true);
+
+  // Estados para modal de escaneo QR
+  const [scannerTurno, setScannerTurno] = useState<any>(null);
 
   useEffect(() => {
     fetchMisTurnos();
@@ -91,6 +98,62 @@ export default function MisTurnos() {
     }
   };
 
+  /**
+   * Determina si el turno se encuentra dentro de la ventana de validación
+   * (tolerancia: 20 min antes y 20 min después del horario de inicio)
+   */
+  const canValidateTurno = (turno: any): boolean => {
+    if (turno.validado) return false;
+    if (turno.estado !== 'ocupado') return false;
+
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    if (turno.fecha !== todayStr) return false;
+
+    // Calcular minutos desde medianoche para el inicio y la hora actual
+    const [startH, startM] = turno.hora_inicio.slice(0, 5).split(':').map(Number);
+    const startMinutes = startH * 60 + startM;
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const tolerancia = config.tolerancia_minutos || 20;
+    const windowStart = startMinutes - tolerancia;
+    const windowEnd = startMinutes + tolerancia;
+
+    return currentMinutes >= windowStart && currentMinutes <= windowEnd;
+  };
+
+  const handleTurnoValidated = async () => {
+    if (!scannerTurno) return;
+
+    try {
+      let query = supabase
+        .from('turnos')
+        .update({
+          validado: true,
+          validado_at: new Date().toISOString()
+        });
+
+      if (scannerTurno.id && isValidUuid(scannerTurno.id)) {
+        query = query.eq('id', scannerTurno.id);
+      } else {
+        query = query
+          .eq('cancha_id', scannerTurno.cancha_id)
+          .eq('fecha', scannerTurno.fecha)
+          .eq('hora_inicio', scannerTurno.hora_inicio);
+      }
+
+      const { error } = await query;
+      if (error) {
+        alert('Error al guardar la validación: ' + error.message);
+      } else {
+        await fetchMisTurnos();
+      }
+    } catch (e: any) {
+      console.error('Error al validar turno:', e);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-bold uppercase tracking-wide text-textSec">Mis Turnos</h2>
@@ -109,40 +172,93 @@ export default function MisTurnos() {
             const todayStr = format(new Date(), 'yyyy-MM-dd');
             const nowHour = format(new Date(), 'HH:mm');
             const isFuture = dateStr > todayStr || (dateStr === todayStr && turno.hora_inicio > nowHour);
+            const isValidable = canValidateTurno(turno);
 
             return (
-              <div key={turno.id} className="bg-surface border border-border rounded-lg p-4 flex items-center justify-between">
+              <div 
+                key={turno.id} 
+                className={`bg-surface border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                  isValidable ? 'border-primary ring-1 ring-primary/40' : 'border-border'
+                }`}
+              >
                 <div>
-                  <p className="text-xs text-textSec font-bold uppercase mb-1">
-                    {format(dateObj, "EEEE d 'de' MMMM", { locale: es })}
-                  </p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-xs text-textSec font-bold uppercase">
+                      {format(dateObj, "EEEE d 'de' MMMM", { locale: es })}
+                    </p>
+                    {turno.validado ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/40">
+                        <CheckCircle2 size={12} /> Validado en Cancha
+                      </span>
+                    ) : isValidable ? (
+                      <span className="animate-pulse inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        Validación Disponible
+                      </span>
+                    ) : null}
+                  </div>
+
                   <p className="text-lg font-bold text-textPri mb-1">
                     {turno.hora_inicio.slice(0,5)} - {turno.hora_fin.slice(0,5)}
                   </p>
-                  <p className="text-sm font-medium">
-                    {turno.canchas.nombre}
+                  <p className="text-sm font-medium text-textPri">
+                    {turno.canchas?.nombre}
                   </p>
-                  {turno.acompanante && <p className="text-xs text-textSec mt-1">Acompañante: {turno.acompanante}</p>}
+                  {turno.acompanante && (
+                    <p className="text-xs text-textSec mt-1">Acompañante: {turno.acompanante}</p>
+                  )}
                 </div>
-                
-                {isFuture && turno.estado === 'ocupado' ? (
-                  <div className="flex flex-col gap-2">
-                    <Button variant="secondary" className="text-xs px-4 py-2" onClick={() => navigate('/reservar', { state: { editTurno: turno } })}>
-                      Editar
+
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  {/* Botón para escanear QR si está en el rango de horario */}
+                  {isValidable && (
+                    <Button
+                      variant="primary"
+                      className="text-xs px-3 py-2 font-bold flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-black border-none shadow-lg animate-bounce"
+                      onClick={() => setScannerTurno(turno)}
+                    >
+                      <QrCode size={16} />
+                      Validar QR
                     </Button>
-                    <Button variant="danger" className="text-xs px-4 py-2" onClick={() => cancelTurno(turno)}>
-                      Cancelar
-                    </Button>
-                  </div>
-                ) : (
-                  <span className="text-xs text-textSec px-2 py-1 bg-[#0d0d0d] rounded border border-[#2a2a2a] uppercase font-bold">
-                    Completado
-                  </span>
-                )}
+                  )}
+
+                  {isFuture && turno.estado === 'ocupado' ? (
+                    <>
+                      <Button 
+                        variant="secondary" 
+                        className="text-xs px-3 py-2" 
+                        onClick={() => navigate('/reservar', { state: { editTurno: turno } })}
+                      >
+                        Editar
+                      </Button>
+                      <Button 
+                        variant="danger" 
+                        className="text-xs px-3 py-2" 
+                        onClick={() => cancelTurno(turno)}
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : !turno.validado ? (
+                    <span className="text-xs text-textSec px-2 py-1 bg-[#0d0d0d] rounded border border-[#2a2a2a] uppercase font-bold">
+                      Completado
+                    </span>
+                  ) : null}
+                </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Modal Lector QR */}
+      {scannerTurno && (
+        <QRScannerModal
+          isOpen={!!scannerTurno}
+          onClose={() => setScannerTurno(null)}
+          expectedCanchaId={scannerTurno.cancha_id}
+          canchaNombre={scannerTurno.canchas?.nombre || `Cancha ${scannerTurno.cancha_id}`}
+          onSuccess={handleTurnoValidated}
+        />
       )}
     </div>
   );

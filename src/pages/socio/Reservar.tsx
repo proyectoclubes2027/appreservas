@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { loginOneSignal } from '../../lib/onesignal';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useClubConfig } from '../../lib/useClubConfig';
 
 const isValidUuid = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -44,7 +45,9 @@ export default function Reservar() {
   // State for edit mode
   const [editTurnoId, setEditTurnoId] = useState<string | null>(null);
 
-  const dates = Array.from({ length: 7 }).map((_, i) => addDays(startOfDay(new Date()), i));
+  const { config } = useClubConfig();
+  const diasVisibles = config.dias_anticipacion || 2;
+  const dates = Array.from({ length: diasVisibles }).map((_, i) => addDays(startOfDay(new Date()), i));
 
   useEffect(() => {
     const initPage = async () => {
@@ -331,6 +334,24 @@ export default function Reservar() {
 
       if (!invitadoError && invitadoData && invitadoData.length >= 5) {
         alert("Has alcanzado el límite de 5 reservas anuales con un Invitado.");
+        setReservingLocal(false);
+        return;
+      }
+    }
+
+    // Check if the current user has an active penalty
+    if (config.validacion_qr_activa) {
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      const { data: penaltyData } = await supabase
+        .from('penalizaciones')
+        .select('*')
+        .eq('socio_dni', socio.dni)
+        .eq('activa', true)
+        .gte('fecha_fin', todayStr)
+        .maybeSingle();
+
+      if (penaltyData) {
+        alert(`Tenés una sanción activa hasta el ${format(parseISO(penaltyData.fecha_fin), 'dd/MM/yyyy')} por no haber validado la presencia en tu turno anterior.`);
         setReservingLocal(false);
         return;
       }

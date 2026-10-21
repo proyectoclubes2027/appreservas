@@ -5,6 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
 import { SHIFTS } from '../../lib/constants';
+import { Settings } from 'lucide-react';
+import { useClubConfig } from '../../lib/useClubConfig';
+import { ClubConfigModal } from '../../components/ClubConfigModal';
 
 const isValidUuid = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -34,6 +37,10 @@ export default function ReservasAdmin() {
 
   // States for detail modal
   const [infoTurno, setInfoTurno] = useState<any>(null);
+
+  // States for Club Config
+  const { config, updateConfig } = useClubConfig();
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
 
   const today = startOfDay(new Date());
   let dates = Array.from({ length: 7 }).map((_, i) => addDays(today, i));
@@ -403,6 +410,11 @@ export default function ReservasAdmin() {
             <span className="hidden sm:inline">⛈️ Bloqueo Masivo</span>
             <span className="inline sm:hidden">⛈️ Bloquear Día</span>
           </Button>
+          <Button variant="primary" onClick={() => setIsConfigModalOpen(true)} className="flex items-center gap-1.5 shadow-sm text-xs sm:text-sm font-bold">
+            <Settings size={16} />
+            <span className="hidden sm:inline">Reglas & QR</span>
+            <span className="inline sm:hidden">Reglas</span>
+          </Button>
         </div>
       </div>
 
@@ -570,6 +582,18 @@ export default function ReservasAdmin() {
                 <p className="text-xs font-bold text-textSec mb-1 uppercase">Titular de la Reserva</p>
                 <p className="text-lg text-primary">{infoTurno.socios.apellido}, {infoTurno.socios.nombre}</p>
                 <p className="text-[10px] text-textSec mt-1 leading-tight">DNI: {infoTurno.socio_dni}</p>
+
+                <div className="mt-2.5">
+                  {infoTurno.validado ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-md bg-emerald-950 text-emerald-400 border border-emerald-500/40">
+                      ✓ Turno Validado con QR
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-400 border border-zinc-700">
+                      Pendiente / Sin Validar
+                    </span>
+                  )}
+                </div>
                 
                 {infoTurno.acompanante && (
                   <div className="mt-4 pt-4 border-t border-[#2a2a2a]">
@@ -589,6 +613,13 @@ export default function ReservasAdmin() {
           </div>
         </div>
       )}
+      {/* Modal Ajustes y Reglas del Club */}
+      <ClubConfigModal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        config={config}
+        onSave={updateConfig}
+      />
     </div>
   );
 }
