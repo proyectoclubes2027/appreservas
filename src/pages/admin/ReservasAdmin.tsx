@@ -396,36 +396,58 @@ export default function ReservasAdmin() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex justify-between items-center bg-surface p-4 rounded-xl border border-border mt-2">
-        <h2 className="text-xl font-bold uppercase tracking-wide text-textSec m-0">Gestión de Reservas</h2>
-        <div className="flex gap-2 flex-wrap justify-end">
-          <Button variant="secondary" onClick={handleUnblockSaturdays} className="flex items-center gap-2 shadow-sm text-xs sm:text-sm">
-            <span className="hidden sm:inline">Desbloquear Sábados</span>
-            <span className="inline sm:hidden">Desbloq. Sáb.</span>
-          </Button>
-          <Button variant="secondary" onClick={handleUnblockSundays} className="flex items-center gap-2 shadow-sm text-xs sm:text-sm">
-            <span className="hidden sm:inline">Desbloquear Domingos</span>
-            <span className="inline sm:hidden">Desbloq. Dom.</span>
-          </Button>
-          <Button variant="danger" onClick={() => setIsMassBlockModalOpen(true)} className="flex items-center gap-2 shadow-sm text-xs sm:text-sm shadow-danger/20">
-            <span className="hidden sm:inline">⛈️ Bloqueo Masivo</span>
-            <span className="inline sm:hidden">⛈️ Bloquear Día</span>
-          </Button>
-          <Button 
-            variant="secondary" 
-            onClick={() => setIsPenalizacionesModalOpen(true)} 
-            className="flex items-center gap-1.5 shadow-sm text-xs sm:text-sm text-amber-400 hover:text-amber-300 border-amber-500/40"
-            title="Ver y levantar sanciones"
+    <div className="flex flex-col gap-4">
+      {/* Header Panel Superior Limpio */}
+      <div className="bg-surface p-4 rounded-2xl border border-border mt-1 shadow-sm flex flex-col gap-3">
+        {/* Fila Título + Acciones Principales */}
+        <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-3">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-primary block leading-tight">Panel Administrador</span>
+            <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wide text-textPri m-0 leading-tight">Gestión de Reservas</h2>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsPenalizacionesModalOpen(true)}
+              className="px-3 py-2 rounded-xl text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+              title="Ver y levantar sanciones"
+            >
+              <ShieldAlert size={15} />
+              <span>Sanciones</span>
+            </button>
+            <button
+              onClick={() => setIsConfigModalOpen(true)}
+              className="px-3 py-2 rounded-xl text-xs font-bold text-[#0d0d0d] bg-primary hover:bg-primary/90 flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+              title="Configurar Reglas y QR"
+            >
+              <Settings size={15} />
+              <span>Reglas</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Fila Acciones Secundarias / Desbloqueos */}
+        <div className="grid grid-cols-3 gap-2">
+          <Button
+            variant="secondary"
+            onClick={handleUnblockSaturdays}
+            className="text-[11px] py-2 px-1 font-semibold flex items-center justify-center text-center truncate"
           >
-            <ShieldAlert size={16} />
-            <span className="hidden sm:inline">Sanciones</span>
-            <span className="inline sm:hidden">Sanciones</span>
+            Desbloq. Sáb.
           </Button>
-          <Button variant="primary" onClick={() => setIsConfigModalOpen(true)} className="flex items-center gap-1.5 shadow-sm text-xs sm:text-sm font-bold">
-            <Settings size={16} />
-            <span className="hidden sm:inline">Reglas & QR</span>
-            <span className="inline sm:hidden">Reglas</span>
+          <Button
+            variant="secondary"
+            onClick={handleUnblockSundays}
+            className="text-[11px] py-2 px-1 font-semibold flex items-center justify-center text-center truncate"
+          >
+            Desbloq. Dom.
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => setIsMassBlockModalOpen(true)}
+            className="text-[11px] py-2 px-1 font-semibold flex items-center justify-center text-center truncate"
+          >
+            ⛈️ Bloquear Día
           </Button>
         </div>
       </div>
