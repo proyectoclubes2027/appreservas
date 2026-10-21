@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Layout } from './components/Layout';
+import { PwaPrompt } from './components/PwaPrompt';
 import { initOneSignal, loginOneSignal } from './lib/onesignal';
 
 import Login from './pages/Login';
@@ -86,6 +87,7 @@ export default function App() {
     <AuthProvider>
       <Router>
         <AppRoutes />
+        <PwaPrompt />
       </Router>
     </AuthProvider>
   );

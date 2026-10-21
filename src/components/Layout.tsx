@@ -66,7 +66,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           {isAdmin && (
             <>
               <NavItem icon={<Calendar />} label="Reservas" path="/admin/reservas" current={location.pathname} onClick={() => navigate('/admin/reservas')} />
-              <NavItem icon={<Users />} label="Socios" path="/admin/socios" current={location.pathname} onClick={() => navigate('/admin/socios')} />
               <NavItem icon={<BarChart />} label="Reportes" path="/admin/reportes" current={location.pathname} onClick={() => navigate('/admin/reportes')} />
               <NavItem icon={<Bell />} label="Noticias" path="/admin/noticias" current={location.pathname} onClick={() => navigate('/admin/noticias')} />
             </>
