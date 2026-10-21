@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, QrCode, Calendar, Clock, Check, X, ShieldAlert } from 'lucide-react';
+import { Settings, QrCode, Calendar, Clock, Check, X, ShieldAlert, Megaphone } from 'lucide-react';
 import { Button } from './ui/Button';
 import { ClubConfig } from '../lib/config';
 
@@ -19,6 +19,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
   onOpenPenalizaciones,
 }) => {
   const [qrActivo, setQrActivo] = useState(config.validacion_qr_activa);
+  const [mostrarAvisoQr, setMostrarAvisoQr] = useState(config.mostrar_aviso_qr || false);
   const [diasAnticipacion, setDiasAnticipacion] = useState(config.dias_anticipacion || 2);
   const [tolerancia, setTolerancia] = useState(config.tolerancia_minutos || 20);
   const [penalizacionDias, setPenalizacionDias] = useState(config.penalizacion_dias || 14);
@@ -31,6 +32,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
     setIsSaving(true);
     const res = await onSave({
       validacion_qr_activa: qrActivo,
+      mostrar_aviso_qr: mostrarAvisoQr,
       dias_anticipacion: Number(diasAnticipacion),
       tolerancia_minutos: Number(tolerancia),
       penalizacion_dias: Number(penalizacionDias),
@@ -92,6 +94,34 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
               {qrActivo
                 ? 'Activo: La app exige validar el turno en la cancha y penaliza las ausencias.'
                 : 'Desactivado (Prueba): Los socios pueden escanear para probar la cámara, pero NO se sanciona.'}
+            </p>
+          </div>
+
+          {/* Switch Comunicado / Mensaje Informativo QR */}
+          <div className="p-3.5 bg-[#0d0d0d] rounded-xl border border-[#2a2a2a] flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Megaphone size={18} className="text-amber-400" />
+                <span className="font-bold text-textPri">Aviso informativo a Socios</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMostrarAvisoQr(!mostrarAvisoQr)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  mostrarAvisoQr ? 'bg-primary' : 'bg-[#333]'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    mostrarAvisoQr ? 'translate-x-5 !bg-black' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+            <p className="text-xs text-textSec">
+              {mostrarAvisoQr
+                ? 'Visible: Muestra el cartel explicativo sobre la novedad de validación QR a todos los socios.'
+                : 'Oculto: No se muestra el cartel informativo en la pantalla de inicio.'}
             </p>
           </div>
 

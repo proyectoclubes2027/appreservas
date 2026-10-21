@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { QrCode, Sparkles, RefreshCw, X, ShieldAlert } from 'lucide-react';
+import { useClubConfig } from '../lib/useClubConfig';
 
 export const QRAnnouncementBanner: React.FC = () => {
-  const [show, setShow] = useState(true);
+  const { config, loading } = useClubConfig();
+  const [dismissed, setDismissed] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleDismiss = () => {
-    setShow(false);
+    setDismissed(true);
   };
+
+  if (loading || !config.mostrar_aviso_qr || dismissed) return null;
 
   const handleForceUpdate = async () => {
     setIsUpdating(true);
@@ -27,8 +31,6 @@ export const QRAnnouncementBanner: React.FC = () => {
     }
     window.location.reload();
   };
-
-  if (!show) return null;
 
   return (
     <div className="mx-4 mt-3 mb-3 bg-[#141414] border border-primary/30 rounded-2xl p-4 shadow-xl relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
