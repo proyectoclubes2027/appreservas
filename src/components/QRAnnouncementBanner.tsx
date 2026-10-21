@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { QrCode, Sparkles, RefreshCw, X, ShieldAlert } from 'lucide-react';
-import { Button } from './ui/Button';
 
 export const QRAnnouncementBanner: React.FC = () => {
   const [show, setShow] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    // Si el socio ya cerró el banner hoy, no se lo volvemos a mostrar inmediatamente
     const dismissedUntil = localStorage.getItem('dismissed_qr_banner_date');
     const today = new Date().toISOString().slice(0, 10);
     if (dismissedUntil !== today) {
@@ -30,7 +28,6 @@ export const QRAnnouncementBanner: React.FC = () => {
           await registration.update();
         }
       }
-      // Limpiar caches del navegador para forzar descarga limpia
       if ('caches' in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map((k) => caches.delete(k)));
@@ -38,70 +35,70 @@ export const QRAnnouncementBanner: React.FC = () => {
     } catch (e) {
       console.warn('Error al limpiar cache:', e);
     }
-    // Recargar la app
     window.location.reload();
   };
 
   if (!show) return null;
 
   return (
-    <div className="mx-4 mt-3 mb-2 bg-gradient-to-r from-surface via-[#1f1a05] to-surface border border-primary/40 rounded-xl p-4 shadow-lg relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
-      {/* Detalle decorativo */}
-      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
-
+    <div className="mx-4 mt-3 mb-3 bg-[#141414] border border-primary/30 rounded-2xl p-4 shadow-xl relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+      {/* Botón cerrar sutil arriba a la derecha */}
       <button
         onClick={handleDismiss}
-        className="absolute top-2 right-2 text-textSec hover:text-textPri p-1 rounded-md"
+        className="absolute top-3 right-3 text-textSec hover:text-textPri p-1.5 rounded-full hover:bg-white/10 transition-colors z-10"
         title="Cerrar aviso"
       >
-        <X size={18} />
+        <X size={16} />
       </button>
 
-      <div className="flex items-start gap-3">
-        <div className="p-2.5 bg-primary/20 text-primary rounded-xl border border-primary/30 shrink-0">
-          <QrCode size={24} />
+      {/* Encabezado: Badges alineados */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-primary bg-primary/15 border border-primary/30 px-2.5 py-1 rounded-full">
+          <Sparkles size={12} /> Novedad
+        </span>
+        <span className="text-[11px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-full">
+          Desde Noviembre
+        </span>
+      </div>
+
+      {/* Título principal con ícono */}
+      <div className="flex items-start gap-3 mb-2.5">
+        <div className="p-2 bg-primary/10 text-primary rounded-xl border border-primary/20 shrink-0 mt-0.5">
+          <QrCode size={20} />
         </div>
-        <div className="flex-1 pr-4">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1">
-              <Sparkles size={13} /> Novedad Importante
-            </span>
-            <span className="text-[10px] bg-primary/20 text-primary font-bold px-1.5 py-0.5 rounded">
-              Desde Noviembre
-            </span>
-          </div>
+        <h4 className="text-sm font-bold text-textPri leading-tight pr-6">
+          Validación obligatoria de turnos con código QR
+        </h4>
+      </div>
 
-          <h4 className="text-sm font-bold text-textPri leading-snug">
-            Validación obligatoria de turnos con QR
-          </h4>
+      {/* Descripción clara */}
+      <p className="text-xs text-textSec leading-relaxed mb-3 pl-1">
+        Para asegurar el cumplimiento de las reservas, deberás validar tu presencia escaneando el QR ubicado en la cancha al momento de jugar.
+      </p>
 
-          <p className="text-xs text-textSec mt-1.5 leading-relaxed">
-            Para garantizar que todas las reservas se cumplan, deberás escanear el código QR ubicado en tu cancha al momento de jugar.
-          </p>
+      {/* Tarjeta de penalización estilizada */}
+      <div className="bg-[#0a0a0a] border border-amber-500/30 rounded-xl p-2.5 mb-4 flex items-center gap-2 text-xs text-amber-300/95 font-medium">
+        <ShieldAlert size={16} className="text-amber-400 shrink-0" />
+        <span>Si no se valida el turno, se aplicará una sanción de <strong>2 semanas</strong> sin poder reservar.</span>
+      </div>
 
-          <div className="mt-2 text-xs flex items-center gap-1 text-amber-400 font-medium">
-            <ShieldAlert size={14} className="shrink-0" />
-            <span>Turno no validado = 2 semanas sin poder reservar.</span>
-          </div>
+      {/* Botones de acción limpios y equilibrados */}
+      <div className="flex items-center gap-2.5 pt-1">
+        <button
+          onClick={handleForceUpdate}
+          disabled={isUpdating}
+          className="flex-1 bg-primary hover:bg-primary/90 text-[#0d0d0d] font-bold text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-md shadow-primary/10"
+        >
+          <RefreshCw size={13} className={isUpdating ? 'animate-spin' : ''} />
+          {isUpdating ? 'Actualizando...' : 'Actualizar App'}
+        </button>
 
-          <div className="mt-3 flex items-center gap-2">
-            <Button
-              variant="primary"
-              className="text-xs font-bold py-1.5 px-3 flex items-center gap-1.5 border border-[#0d0d0d]"
-              onClick={handleForceUpdate}
-              disabled={isUpdating}
-            >
-              <RefreshCw size={13} className={isUpdating ? 'animate-spin' : ''} />
-              {isUpdating ? 'Actualizando...' : 'Actualizar App para habilitar QR'}
-            </Button>
-            <button
-              onClick={handleDismiss}
-              className="text-xs text-textSec underline hover:text-textPri px-2 py-1"
-            >
-              Entendido
-            </button>
-          </div>
-        </div>
+        <button
+          onClick={handleDismiss}
+          className="px-4 py-2.5 text-xs text-textSec hover:text-textPri font-medium rounded-xl hover:bg-white/5 transition-colors"
+        >
+          Entendido
+        </button>
       </div>
     </div>
   );
