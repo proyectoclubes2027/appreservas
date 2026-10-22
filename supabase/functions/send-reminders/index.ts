@@ -17,15 +17,27 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    // 1. Obtener la hora del recordatorio (hora actual + 1 hora)
-    const hoy = new Date()
-    const target = new Date(hoy.getTime() + 60 * 60 * 1000)
-    
-    // Formatear fecha y hora para la consulta
-    const fechaSQL = target.toISOString().split('T')[0]
-    const horaSQL = `${String(target.getHours()).padStart(2, '0')}:00:00`
+    // 1. Obtener la hora del recordatorio (hora de Argentina + 1 hora)
+    // Las funciones de Supabase corren en UTC; convertimos explícitamente a hora argentina.
+    const nowUtc = new Date()
+    const targetUtc = new Date(nowUtc.getTime() + 60 * 60 * 1000)
 
-    console.log(`[Reminder] Buscando turnos para ${fechaSQL} a las ${horaSQL}...`)
+    const arDateFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    const arHourFormatter = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour: '2-digit',
+      hour12: false
+    })
+
+    const fechaSQL = arDateFormatter.format(targetUtc)
+    const horaSQL = `${arHourFormatter.format(targetUtc)}:00:00`
+
+    console.log(`[Reminder] Buscando turnos para ${fechaSQL} a las ${horaSQL} (Hora Argentina)...`)
 
     // 2. Buscar turnos que coincidan
     const { data: turnos, error: turnosError } = await supabaseClient
@@ -56,10 +68,15 @@ serve(async (req) => {
 
       const notificationBody = {
         app_id: ONESIGNAL_APP_ID,
-        include_external_user_ids: [turno.socio_dni], // Usamos el DNI como ID
-        headings: { es: '🎾 Recordatorio de Turno' },
-        contents: { es: `¡Hola! Tenés tu turno en 1 hora en la ${turno.canchas.nombre}. ¡Te esperamos!` },
-        url: 'https://caectenis.netlify.app'
+        include_aliases: {
+          external_id: [String(turno.socio_dni)]
+        },
+        target_channel: "push",
+        headings: { es: '🎾 Recordatorio de Turno', en: '🎾 Recordatorio de Turno' },
+        contents: { es: `¡Hola! Tenés tu turno en 1 hora en la ${turno.canchas?.nombre || 'cancha'}. ¡Te esperamos!` },
+        url: 'https://caectenis.netlify.app',
+        priority: 10,
+        android_visibility: 1
       }
 
       const res = await fetch('https://onesignal.com/api/v1/notifications', {

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
-import { getNotificationPermission, isPushNotificationsSupported, initOneSignal } from '../lib/onesignal';
+import { getNotificationPermission, isPushNotificationsSupported, requestNotificationPermission, loginOneSignal } from '../lib/onesignal';
+import { useAuth } from '../context/AuthContext';
 
 export const NotificationBanner = () => {
   const [show, setShow] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const { socio } = useAuth();
 
   useEffect(() => {
     // Solo mostramos el banner si el navegador soporta notificaciones Y aún no dio permiso
@@ -26,25 +28,24 @@ export const NotificationBanner = () => {
     setRequesting(true);
 
     try {
-      // 1. Forzamos la inicialización de OneSignal por las dudas
-      await initOneSignal();
+      // 1. Pedir permiso a través de OneSignal y activar la suscripción push
+      const granted = await requestNotificationPermission();
 
-      // 2. Pedimos el permiso directamente al navegador (Nativo).
-      // Esto evita que el SDK remoto de OneSignal se quede "colgado" o trabado.
-      const permission = await window.Notification.requestPermission();
-      
-      // 3. Si el usuario ya eligió (Permitir o Bloquear), se oculta instantáneamente
-      if (permission !== 'default') {
+      // 2. Si hay un socio con sesión iniciada, vincular su DNI
+      if (socio?.dni) {
+        await loginOneSignal(String(socio.dni));
+      }
+
+      // 3. Ocultar el banner si se otorgó el permiso o si ya no es default
+      if (granted || (typeof Notification !== 'undefined' && Notification.permission !== 'default')) {
         setShow(false);
+        localStorage.setItem('hide_notification_banner', 'true');
       }
     } catch(e) {
-      console.error(e);
+      console.error('[NotificationBanner] Error:', e);
+      setShow(false);
     } finally {
       setRequesting(false);
-      // Fallback: si por alguna razón ya no es default, lo ocultamos
-      if (window.Notification.permission !== 'default') {
-        setShow(false);
-      }
     }
   };
 

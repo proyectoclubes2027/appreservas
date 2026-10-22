@@ -1,3 +1,6 @@
+// Importar SDK de OneSignal para Push Notifications en segundo plano
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+
 const CACHE_NAME = 'caec-tenis-v1';
 const ASSETS_TO_CACHE = [
   '/',

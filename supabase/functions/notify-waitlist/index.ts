@@ -84,6 +84,9 @@ serve(async (req) => {
         en: mensaje,
         es: mensaje
       },
+      url: 'https://caectenis.netlify.app',
+      priority: 10,
+      android_visibility: 1
     }
 
     console.log('[notify-waitlist] Payload enviado a OneSignal:', JSON.stringify(notificationBody))

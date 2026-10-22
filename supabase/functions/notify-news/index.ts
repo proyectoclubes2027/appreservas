@@ -36,9 +36,11 @@ serve(async (req) => {
     const notificationBody = {
       app_id: ONESIGNAL_APP_ID,
       included_segments: ['All'],
-      headings: { es: '📢 Nuevo Comunicado - CAEC' },
+      headings: { es: '📢 Nuevo Comunicado - CAEC', en: '📢 Nuevo Comunicado - CAEC' },
       contents: { es: noticia.titulo },
-      url: 'https://caectenis.netlify.app' // Redirige a la app
+      url: 'https://caectenis.netlify.app',
+      priority: 10,
+      android_visibility: 1
     }
 
     const res = await fetch('https://onesignal.com/api/v1/notifications', {

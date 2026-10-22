@@ -23,10 +23,15 @@ serve(async (req) => {
 
     const notificationBody = {
       app_id: ONESIGNAL_APP_ID,
-      include_external_user_ids: [socio_dni],
-      headings: { es: '⚠️ Turno Cancelado' },
+      include_aliases: {
+        external_id: [String(socio_dni)]
+      },
+      target_channel: "push",
+      headings: { es: '⚠️ Turno Cancelado', en: '⚠️ Turno Cancelado' },
       contents: { es: `Tu reserva del día ${fecha} a las ${hora}hs ha sido cancelada por el club. Motivo: ${motivo || 'No especificado'}.` },
-      url: 'https://caectenis.netlify.app'
+      url: 'https://caectenis.netlify.app',
+      priority: 10,
+      android_visibility: 1
     }
 
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
