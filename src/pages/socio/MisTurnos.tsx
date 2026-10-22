@@ -108,6 +108,7 @@ export default function MisTurnos() {
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     if (turno.fecha !== todayStr) return false;
+    if (!turno.hora_inicio) return false;
 
     // Calcular minutos desde medianoche para el inicio y la hora actual
     const [startH, startM] = turno.hora_inicio.slice(0, 5).split(':').map(Number);
@@ -167,12 +168,15 @@ export default function MisTurnos() {
       ) : (
         <div className="flex flex-col gap-3">
           {turnos.map(turno => {
-            const dateObj = parseISO(turno.fecha);
-            const dateStr = turno.fecha; // yyyy-MM-dd
+            const dateObj = turno.fecha ? parseISO(turno.fecha) : new Date();
+            const dateStr = turno.fecha || '';
             const todayStr = format(new Date(), 'yyyy-MM-dd');
             const nowHour = format(new Date(), 'HH:mm');
-            const isFuture = dateStr > todayStr || (dateStr === todayStr && turno.hora_inicio > nowHour);
+            const isFuture = dateStr > todayStr || (dateStr === todayStr && (turno.hora_inicio || '') > nowHour);
             const isValidable = canValidateTurno(turno);
+            const formattedDate = !isNaN(dateObj.getTime())
+              ? format(dateObj, "EEEE d 'de' MMMM", { locale: es })
+              : dateStr;
 
             return (
               <div 
@@ -184,7 +188,7 @@ export default function MisTurnos() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-xs text-textSec font-bold uppercase">
-                      {format(dateObj, "EEEE d 'de' MMMM", { locale: es })}
+                      {formattedDate}
                     </p>
                     {turno.validado ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/40">
@@ -198,7 +202,7 @@ export default function MisTurnos() {
                   </div>
 
                   <p className="text-lg font-bold text-textPri mb-1">
-                    {turno.hora_inicio.slice(0,5)} - {turno.hora_fin.slice(0,5)}
+                    {(turno.hora_inicio || '').slice(0, 5)} - {(turno.hora_fin || '').slice(0, 5)}
                   </p>
                   <p className="text-sm font-medium text-textPri">
                     {turno.canchas?.nombre}

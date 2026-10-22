@@ -22,7 +22,50 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const hasScannedRef = useRef(false);
   const readerElementId = 'qr-reader-container';
+
+  const stopCameraSafely = async () => {
+    const scanner = scannerRef.current;
+    scannerRef.current = null;
+
+    try {
+      // 1. Liberar la pista del stream del video manualmente (vital en Android para no colgar WebGL/hardware)
+      const container = document.getElementById(readerElementId);
+      if (container) {
+        const video = container.querySelector('video') as HTMLVideoElement | null;
+        if (video) {
+          if (video.srcObject) {
+            const stream = video.srcObject as MediaStream;
+            stream.getTracks().forEach((track) => {
+              try {
+                track.stop();
+              } catch (_) {
+                // ignore
+              }
+            });
+            video.srcObject = null;
+          }
+          video.pause();
+        }
+      }
+
+      // 2. Detener scanner de html5-qrcode sólo si sigue escaneando
+      if (scanner && (scanner as any).isScanning) {
+        await scanner.stop();
+      }
+    } catch (err) {
+      console.warn('Detención segura de cámara:', err);
+    }
+
+    try {
+      if (scanner) {
+        scanner.clear();
+      }
+    } catch (_) {
+      // ignore
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -30,79 +73,83 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsProcessing(false);
+    hasScannedRef.current = false;
 
-    let html5QrCode: Html5Qrcode | null = null;
+    let isSubscribed = true;
 
     const startScanner = async () => {
       try {
-        // Pequeño timeout para asegurar que el div esté en el DOM
-        await new Promise((r) => setTimeout(r, 150));
+        await new Promise((r) => setTimeout(r, 200));
+        if (!isSubscribed) return;
 
-        html5QrCode = new Html5Qrcode(readerElementId);
+        const html5QrCode = new Html5Qrcode(readerElementId);
         scannerRef.current = html5QrCode;
 
         const config = {
           fps: 10,
-          qrbox: { width: 250, height: 250 },
+          qrbox: { width: 240, height: 240 },
           aspectRatio: 1.0,
         };
 
         await html5QrCode.start(
           { facingMode: 'environment' },
           config,
-          async (decodedText) => {
-            await handleScan(decodedText);
+          (decodedText) => {
+            handleScan(decodedText);
           },
           () => {
-            // Callback opcional de frames descartados
+            // Ignorar frames descartados
           }
         );
       } catch (err: any) {
-        console.error('Error al iniciar la cámara para QR:', err);
-        setErrorMsg('No se pudo acceder a la cámara. Por favor asegurate de dar permisos en tu navegador/celular.');
+        console.error('Error al iniciar cámara:', err);
+        if (isSubscribed) {
+          setErrorMsg('No se pudo acceder a la cámara. Por favor verificá los permisos en tu navegador/celular.');
+        }
       }
     };
 
     startScanner();
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current
-          .stop()
-          .then(() => scannerRef.current?.clear())
-          .catch((e) => console.warn('Error al detener scanner:', e));
-        scannerRef.current = null;
-      }
+      isSubscribed = false;
+      stopCameraSafely();
     };
   }, [isOpen]);
 
   const handleScan = async (code: string) => {
-    if (isProcessing) return;
-    setIsProcessing(true);
+    // Si ya procesó o está en curso, descartar frames subsecuentes
+    if (hasScannedRef.current || isProcessing) return;
 
-    const cleanCode = code.trim().toUpperCase();
+    const cleanCode = (code || '').trim().toUpperCase();
     const expected = `CAEC-CANCHA-${expectedCanchaId}`;
 
-    if (cleanCode === expected) {
-      setSuccessMsg(`¡Código QR verificado correctamente!`);
-      if (scannerRef.current) {
-        try {
-          await scannerRef.current.stop();
-        } catch (e) {
-          console.warn('Stop failed', e);
-        }
-      }
+    // Acepta si es "CAEC-CANCHA-X" o si forma parte de una URL
+    const isMatch = cleanCode === expected || cleanCode.includes(expected);
+
+    if (isMatch) {
+      hasScannedRef.current = true;
+      setIsProcessing(true);
+      setSuccessMsg('¡Código QR verificado correctamente!');
+
+      // Detener cámara de inmediato para liberar recursos
+      await stopCameraSafely();
+
       setTimeout(async () => {
-        await onSuccess();
-        onClose();
-      }, 1200);
-    } else if (cleanCode.startsWith('CAEC-CANCHA-')) {
-      const scannedId = cleanCode.replace('CAEC-CANCHA-', '');
+        try {
+          await onSuccess();
+        } catch (err) {
+          console.error('Error ejecutando onSuccess:', err);
+        } finally {
+          onClose();
+        }
+      }, 1000);
+    } else if (cleanCode.includes('CAEC-CANCHA-')) {
+      const match = cleanCode.match(/CAEC-CANCHA-(\d+)/);
+      const scannedId = match ? match[1] : '';
       setErrorMsg(`Escaneaste el QR de la Cancha ${scannedId}, pero tu turno es en ${canchaNombre}.`);
-      setIsProcessing(false);
     } else {
       setErrorMsg('El código QR escaneado no pertenece a las canchas del club.');
-      setIsProcessing(false);
     }
   };
 
@@ -121,7 +168,10 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              stopCameraSafely();
+              onClose();
+            }}
             className="p-1 rounded-full text-textSec hover:text-textPri hover:bg-white/10 transition-colors"
           >
             <X size={20} />
@@ -153,7 +203,14 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         )}
 
         <div className="mt-4 flex gap-2">
-          <Button variant="secondary" fullWidth onClick={onClose}>
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => {
+              stopCameraSafely();
+              onClose();
+            }}
+          >
             Cerrar
           </Button>
         </div>

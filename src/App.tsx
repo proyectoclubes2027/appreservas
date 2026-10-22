@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Layout } from './components/Layout';
 import { PwaPrompt } from './components/PwaPrompt';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { initOneSignal, loginOneSignal } from './lib/onesignal';
 
 import Login from './pages/Login';
@@ -84,11 +85,13 @@ export default function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <Router>
-        <AppRoutes />
-        <PwaPrompt />
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+          <PwaPrompt />
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
