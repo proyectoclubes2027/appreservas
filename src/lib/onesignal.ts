@@ -7,7 +7,7 @@ const doInit = async (): Promise<void> => {
   await OneSignal.init({
     appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
     allowLocalhostAsSecureOrigin: true,
-    serviceWorkerPath: 'sw.js',
+    serviceWorkerPath: '/sw.js',
     serviceWorkerParam: { scope: '/' },
     welcomeNotification: {
       title: '¡CAEC Tenis!',
@@ -47,7 +47,7 @@ export const loginOneSignal = async (dni: string): Promise<void> => {
   try {
     await initOneSignal();
     await OneSignal.login(String(dni));
-    if (Notification.permission === 'granted') {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       try {
         await (OneSignal.User as any)?.PushSubscription?.optIn?.();
       } catch (_) {}
@@ -58,36 +58,37 @@ export const loginOneSignal = async (dni: string): Promise<void> => {
   }
 };
 
-/** Solicita permiso de notificaciones al usuario. */
+/** Solicita permiso de notificaciones al usuario con timeout de seguridad para no colgar la UI. */
 export const requestNotificationPermission = async (): Promise<boolean> => {
-  try {
-    await initOneSignal();
-    
-    // Solicitar permiso con el SDK de OneSignal
-    await OneSignal.Notifications.requestPermission();
+  const withTimeout = <T>(promise: Promise<T>, ms = 4000): Promise<T | null> =>
+    Promise.race([
+      promise,
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
+    ]);
 
-    // Si fue concedido, asegurar activación de PushSubscription en OneSignal
-    if (Notification.permission === 'granted') {
+  try {
+    if (!('Notification' in window)) return false;
+
+    // 1. Pedir permiso directamente al navegador con el gesto de clic activo
+    let perm = Notification.permission;
+    if (perm === 'default') {
+      const requested = await withTimeout(window.Notification.requestPermission());
+      perm = requested || Notification.permission;
+    }
+
+    // 2. Si fue otorgado, inicializar OneSignal y activar PushSubscription
+    if (perm === 'granted') {
+      await withTimeout(initOneSignal(), 3000);
       try {
-        await (OneSignal.User as any)?.PushSubscription?.optIn?.();
+        await withTimeout((OneSignal.User as any)?.PushSubscription?.optIn?.(), 3000);
       } catch (optErr) {
         console.warn('[OneSignal] Advertencia al activar PushSubscription:', optErr);
       }
     }
 
-    return OneSignal.Notifications.permission;
+    return perm === 'granted';
   } catch (err) {
-    console.error('[OneSignal] Error al pedir permiso con SDK:', err);
-    // Fallback nativo
-    if ('Notification' in window) {
-      const nativePerm = await window.Notification.requestPermission();
-      if (nativePerm === 'granted') {
-        try {
-          await (OneSignal.User as any)?.PushSubscription?.optIn?.();
-        } catch (_) {}
-      }
-      return nativePerm === 'granted';
-    }
+    console.error('[OneSignal] Error al pedir permiso:', err);
     return false;
   }
 };
