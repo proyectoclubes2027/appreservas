@@ -15,12 +15,17 @@ CREATE TABLE IF NOT EXISTS configuracion_club (
   dias_anticipacion integer DEFAULT 2,        -- Días permitidos: 2 = hoy y mañana
   tolerancia_minutos integer DEFAULT 20,      -- 20 min antes y 20 min después
   penalizacion_dias integer DEFAULT 14,       -- 2 semanas de sanción
+  mostrar_aviso_qr boolean DEFAULT false,     -- Cartel informativo para socios
   updated_at timestamp with time zone DEFAULT now()
 );
 
+-- Asegurar columna mostrar_aviso_qr si la tabla ya existía previamente
+ALTER TABLE configuracion_club 
+ADD COLUMN IF NOT EXISTS mostrar_aviso_qr boolean DEFAULT false;
+
 -- Insertar configuración por defecto si no existe
-INSERT INTO configuracion_club (id, validacion_qr_activa, dias_anticipacion, tolerancia_minutos, penalizacion_dias)
-VALUES ('general', false, 2, 20, 14)
+INSERT INTO configuracion_club (id, validacion_qr_activa, dias_anticipacion, tolerancia_minutos, penalizacion_dias, mostrar_aviso_qr)
+VALUES ('general', false, 2, 20, 14, false)
 ON CONFLICT (id) DO NOTHING;
 
 -- 3. Tabla de penalizaciones a socios
