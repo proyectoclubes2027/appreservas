@@ -529,15 +529,13 @@ export default function Reservar() {
       }
     };
 
-    const isShort = shift.start === '19:00';
     return (
       <button 
         key={shift.start} 
         onClick={handleClick} 
-        className={`flex flex-col items-center justify-center ${isShort ? 'h-10' : 'h-14'} rounded-lg text-sm font-bold border transition-colors shadow-sm ${bgClass}`}
+        className={`flex flex-col items-center justify-center h-14 rounded-lg text-sm font-bold border transition-colors shadow-sm ${bgClass}`}
       >
         <span>{shift.start}</span>
-        {isShort && <span className="text-[10px] font-bold leading-none mt-0.5">(1 Hora)</span>}
       </button>
     );
   };
@@ -647,11 +645,6 @@ export default function Reservar() {
               </label>
             </div>
 
-            {selectedShift?.start === '19:00' && (
-              <div className="bg-surface border border-[#2a2a2a] text-textPri text-xs font-bold p-3 rounded-lg mb-4 text-center shadow-sm">
-                ⚠️ Atención: Este turno es de 1 hora (finaliza 20:00 hs).
-              </div>
-            )}
 
             <div className="flex flex-col gap-3 mb-6 bg-[#0d0d0d] p-3 rounded-lg border border-[#2a2a2a]">
               <label className="text-xs font-semibold text-textSec uppercase">Jugador/es Rivales (opcional)</label>

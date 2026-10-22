@@ -381,16 +381,14 @@ export default function ReservasAdmin() {
       }
     };
 
-    const isShort = shift.start === '19:00';
     return (
       <button 
         key={shift.start} 
         onClick={handleClick} 
-        className={`flex flex-col items-center justify-center ${isShort ? 'h-10' : 'h-14'} rounded-lg text-sm font-bold border transition-colors shadow-sm ${bgClass}`}
+        className={`flex flex-col items-center justify-center h-14 rounded-lg text-sm font-bold border transition-colors shadow-sm ${bgClass}`}
         title={isLibre ? "Bloquear" : "Ver Detalle"}
       >
         <span>{shift.start}</span>
-        {isShort && <span className="text-[10px] font-bold leading-none mt-0.5">(1 Hora)</span>}
       </button>
     );
   };
