@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, QrCode, Calendar, Clock, Check, X, ShieldAlert, Megaphone } from 'lucide-react';
 import { Button } from './ui/Button';
 import { ClubConfig } from '../lib/config';
@@ -18,13 +18,24 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
   onSave,
   onOpenPenalizaciones,
 }) => {
-  const [qrActivo, setQrActivo] = useState(config.validacion_qr_activa);
-  const [mostrarAvisoQr, setMostrarAvisoQr] = useState(config.mostrar_aviso_qr || false);
+  const [qrActivo, setQrActivo] = useState(Boolean(config.validacion_qr_activa));
+  const [mostrarAvisoQr, setMostrarAvisoQr] = useState(Boolean(config.mostrar_aviso_qr));
   const [diasAnticipacion, setDiasAnticipacion] = useState(config.dias_anticipacion || 2);
   const [tolerancia, setTolerancia] = useState(config.tolerancia_minutos || 20);
   const [penalizacionDias, setPenalizacionDias] = useState(config.penalizacion_dias || 14);
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Sincronizar siempre con la configuración real cuando se abre el modal o cambia la config
+  useEffect(() => {
+    if (isOpen) {
+      setQrActivo(Boolean(config.validacion_qr_activa));
+      setMostrarAvisoQr(Boolean(config.mostrar_aviso_qr));
+      setDiasAnticipacion(config.dias_anticipacion || 2);
+      setTolerancia(config.tolerancia_minutos || 20);
+      setPenalizacionDias(config.penalizacion_dias || 14);
+    }
+  }, [isOpen, config]);
 
   if (!isOpen) return null;
 

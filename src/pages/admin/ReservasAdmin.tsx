@@ -40,7 +40,7 @@ export default function ReservasAdmin() {
   const [infoTurno, setInfoTurno] = useState<any>(null);
 
   // States for Club Config
-  const { config, updateConfig } = useClubConfig();
+  const { config, updateConfig, refreshConfig } = useClubConfig();
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isPenalizacionesModalOpen, setIsPenalizacionesModalOpen] = useState(false);
 
@@ -416,7 +416,10 @@ export default function ReservasAdmin() {
               <span>Sanciones</span>
             </button>
             <button
-              onClick={() => setIsConfigModalOpen(true)}
+              onClick={() => {
+                refreshConfig();
+                setIsConfigModalOpen(true);
+              }}
               className="px-3 py-2 rounded-xl text-xs font-bold text-[#0d0d0d] bg-primary hover:bg-primary/90 flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
               title="Configurar Reglas y QR"
             >
@@ -648,16 +651,18 @@ export default function ReservasAdmin() {
         </div>
       )}
       {/* Modal Ajustes y Reglas del Club */}
-      <ClubConfigModal
-        isOpen={isConfigModalOpen}
-        onClose={() => setIsConfigModalOpen(false)}
-        config={config}
-        onSave={updateConfig}
-        onOpenPenalizaciones={() => {
-          setIsConfigModalOpen(false);
-          setIsPenalizacionesModalOpen(true);
-        }}
-      />
+      {isConfigModalOpen && (
+        <ClubConfigModal
+          isOpen={isConfigModalOpen}
+          onClose={() => setIsConfigModalOpen(false)}
+          config={config}
+          onSave={updateConfig}
+          onOpenPenalizaciones={() => {
+            setIsConfigModalOpen(false);
+            setIsPenalizacionesModalOpen(true);
+          }}
+        />
+      )}
 
       {/* Modal para Levantar Sanciones */}
       <PenalizacionesModal
