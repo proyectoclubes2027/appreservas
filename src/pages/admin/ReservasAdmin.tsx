@@ -282,7 +282,9 @@ export default function ReservasAdmin() {
         .update({ 
           estado: 'libre', 
           socio_dni: null, 
-          acompanante: null 
+          acompanante: null,
+          validado: false,
+          validado_at: null
         });
     } else {
       // De lo contrario (bloqueado), eliminamos la fila

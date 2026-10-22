@@ -55,7 +55,9 @@ export default function MisTurnos() {
       .update({ 
         estado: 'libre', 
         socio_dni: null, 
-        acompanante: null 
+        acompanante: null,
+        validado: false,
+        validado_at: null
       });
 
     if (id && isValidUuid(id)) {

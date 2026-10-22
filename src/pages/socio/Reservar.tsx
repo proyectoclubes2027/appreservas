@@ -395,7 +395,9 @@ export default function Reservar() {
       hora_fin: selectedShift.end,
       socio_dni: socio.dni,
       acompanante: acomnames,
-      estado: 'ocupado'
+      estado: 'ocupado',
+      validado: false,
+      validado_at: null
     }, { onConflict: 'cancha_id,fecha,hora_inicio' });
 
     if (error) {
@@ -418,7 +420,9 @@ export default function Reservar() {
       .update({ 
         estado: 'libre', 
         socio_dni: null, 
-        acompanante: null 
+        acompanante: null,
+        validado: false,
+        validado_at: null
       });
 
     if (id && isValidUuid(id)) {
