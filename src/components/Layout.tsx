@@ -1,20 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, User, LogOut, Users, BarChart, Bell } from 'lucide-react';
+import { Calendar, User, LogOut, Users, BarChart, Bell, RotateCw } from 'lucide-react';
 import { NotificationBanner } from './NotificationBanner';
 import { NewsPopup } from './NewsPopup';
 import { ProfileCompletionModal } from './ProfileCompletionModal';
 import { QRAnnouncementBanner } from './QRAnnouncementBanner';
+import { forzarActualizacionApp } from '../lib/pwa-update';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { socio, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/login');
+  };
+
+  const handleForceUpdate = async () => {
+    setIsUpdating(true);
+    await forzarActualizacionApp();
   };
 
   const isSocio = socio?.rol === 'socio';
@@ -29,11 +36,21 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <div className="flex items-center">
           <img src="/empalme-central-logo.png" alt="CAEC Tenis" className="h-10 sm:h-12 object-contain rounded-md" />
         </div>
-        {socio && (
-          <button onClick={handleSignOut} className="p-2 bg-[#0d0d0d] text-primary rounded-full hover:bg-surface transition-colors" title="Cerrar sesión">
-            <LogOut size={20} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleForceUpdate}
+            disabled={isUpdating}
+            className="p-2 bg-[#0d0d0d] text-primary rounded-full hover:bg-surface transition-transform active:scale-90"
+            title="Actualizar a la última versión"
+          >
+            <RotateCw size={18} className={isUpdating ? 'animate-spin' : ''} />
           </button>
-        )}
+          {socio && (
+            <button onClick={handleSignOut} className="p-2 bg-[#0d0d0d] text-primary rounded-full hover:bg-surface transition-colors" title="Cerrar sesión">
+              <LogOut size={20} />
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Pop-up de completamiento de perfil obligatorio */}
