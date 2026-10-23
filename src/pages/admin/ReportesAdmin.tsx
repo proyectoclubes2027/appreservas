@@ -167,7 +167,9 @@ export default function ReportesAdmin() {
                     {s.apellido}, {s.nombre}
                   </p>
                   <div className="flex justify-center w-24">
-                     <p className={`font-bold ${s.reservasInvitado >= 5 ? 'text-blocked' : 'text-primary'}`}>{s.reservasInvitado}</p>
+                     <p className={`font-bold ${s.reservasInvitado > 4 ? 'text-amber-400' : 'text-primary'}`}>
+                       {s.reservasInvitado} {s.reservasInvitado > 4 && <span className="text-[10px] text-amber-500 font-normal">($ extra)</span>}
+                     </p>
                   </div>
                 </div>
               ))}

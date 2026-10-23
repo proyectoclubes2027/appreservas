@@ -309,33 +309,58 @@ export default function Reservar() {
       return;
     }
 
-    // Check uniqueness explicitly to avoid a single person twice
-    const uniqueParticipants = Array.from(new Set(participants));
-    if (uniqueParticipants.length !== participants.length) {
+    // Check uniqueness explicitly to avoid a single person twice (excluding invitado 123987456)
+    const nonInvitados = participants.filter(d => d !== '123987456');
+    const uniqueNonInvitados = Array.from(new Set(nonInvitados));
+    if (uniqueNonInvitados.length !== nonInvitados.length) {
       alert("Has seleccionado al mismo jugador repetidas veces.");
       setReservingLocal(false);
       return;
     }
 
-    // Validate Invitado limit (max 5 per year per titular)
-    if (participants.includes('123987456')) {
+    // Validar invitaciones del titular (cupo bonificado y cobro de extras)
+    const countInvitadosEnReserva = participants.filter(d => d === '123987456').length;
+    if (countInvitadosEnReserva > 0) {
       const currentYearStr = new Date().getFullYear().toString();
       const startOfYear = `${currentYearStr}-01-01`;
       const endOfYear = `${currentYearStr}-12-31`;
 
-      const { data: invitadoData, error: invitadoError } = await supabase
+      const { data: turnosConInvitado } = await supabase
         .from('turnos')
-        .select('id')
+        .select('id, acompanante')
         .eq('socio_dni', socio.dni)
         .gte('fecha', startOfYear)
         .lte('fecha', endOfYear)
         .ilike('acompanante', '%Especial, I.%')
         .neq('estado', 'libre');
 
-      if (!invitadoError && invitadoData && invitadoData.length >= 5) {
-        alert("Has alcanzado el límite de 5 reservas anuales con un Invitado.");
-        setReservingLocal(false);
-        return;
+      // Calcular cantidad de invitaciones usadas en el año
+      let totalInvitadosUsados = 0;
+      (turnosConInvitado || []).forEach(t => {
+        const matches = (t.acompanante || '').match(/Especial,\s*I\./gi);
+        totalInvitadosUsados += matches ? matches.length : 1;
+      });
+
+      // Si ya consumió o supera las 4 invitaciones anuales bonificadas
+      if (totalInvitadosUsados >= 4) {
+        const montoExtra = countInvitadosEnReserva * 10000;
+        const confirmar = window.confirm(
+          `Aviso de Invitados:\n\nYa has consumido tus 4 invitaciones bonificadas del año (usadas: ${totalInvitadosUsados}).\n\nEsta reserva incluye ${countInvitadosEnReserva} invitado/s con un costo adicional de $ 10.000 c/u ($ ${montoExtra.toLocaleString('es-AR')}), que se liquidará en secretaría.\n\n¿Deseas confirmar la reserva?`
+        );
+        if (!confirmar) {
+          setReservingLocal(false);
+          return;
+        }
+      } else if (totalInvitadosUsados + countInvitadosEnReserva > 4) {
+        const conCargo = (totalInvitadosUsados + countInvitadosEnReserva) - 4;
+        const montoExtra = conCargo * 10000;
+        const confirmar = window.confirm(
+          `Aviso de Invitados:\n\nCon esta reserva superas tus 4 invitaciones bonificadas del año (usadas: ${totalInvitadosUsados}, agregas: ${countInvitadosEnReserva}).\n\n${conCargo} de ellos tendrá costo extra de $ 10.000 ($ ${montoExtra.toLocaleString('es-AR')}), que se liquidará en secretaría.\n\n¿Deseas confirmar la reserva?`
+        );
+        if (!confirmar) {
+          setReservingLocal(false);
+          return;
+        }
       }
     }
 
