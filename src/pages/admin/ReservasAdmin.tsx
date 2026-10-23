@@ -5,10 +5,11 @@ import { useAuth } from '../../context/AuthContext';
 import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
 import { SHIFTS } from '../../lib/constants';
-import { Settings, ShieldAlert } from 'lucide-react';
+import { Settings, ShieldAlert, CloudRain } from 'lucide-react';
 import { useClubConfig } from '../../lib/useClubConfig';
 import { ClubConfigModal } from '../../components/ClubConfigModal';
 import { PenalizacionesModal } from '../../components/PenalizacionesModal';
+import { resolverCancelacionesTardiasVencidas } from '../../lib/cancelaciones';
 
 const isValidUuid = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -57,10 +58,23 @@ export default function ReservasAdmin() {
     const initPage = async () => {
       setLoadingLocal(true);
       await Promise.all([fetchTurnos(), fetchCanchas()]);
+      resolverCancelacionesTardiasVencidas(config).catch(console.warn);
       setLoadingLocal(false);
     };
     initPage();
   }, [selectedDate]);
+
+  const handleToggleClima = async () => {
+    const nuevoValor = !config.clima_inestable;
+    const res = await updateConfig({ clima_inestable: nuevoValor });
+    if (res.success) {
+      if (nuevoValor) {
+        alert("🌧️ Modo Clima Inestable ACTIVADO.\n\nHoy se suspenden las exigencias de validación QR y las sanciones automáticas por ausencia o cancelación sobre la hora.");
+      } else {
+        alert("☀️ Modo Clima Inestable DESACTIVADO.\n\nRige nuevamente el sistema habitual de validación QR y sanciones.");
+      }
+    }
+  };
 
   const confirmMassBlock = async () => {
     setMassBlockLoading(true);
@@ -406,7 +420,21 @@ export default function ReservasAdmin() {
             <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wide text-textPri m-0 leading-tight">Gestión de Reservas</h2>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            {/* Botón Clima Inestable (Opción B) */}
+            <button
+              onClick={handleToggleClima}
+              className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 border ${
+                config.clima_inestable
+                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 animate-pulse'
+                  : 'bg-[#0d0d0d] hover:bg-[#181818] text-textSec hover:text-textPri border-border'
+              }`}
+              title="Activar / Desactivar modo de clima inestable por lluvia"
+            >
+              <CloudRain size={15} className={config.clima_inestable ? 'text-sky-400' : 'text-textSec'} />
+              <span>{config.clima_inestable ? '🌧️ Clima Inestable: ACTIVO' : '⛅ Clima Normal'}</span>
+            </button>
+
             <button
               onClick={() => setIsPenalizacionesModalOpen(true)}
               className="px-3 py-2 rounded-xl text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
@@ -428,6 +456,24 @@ export default function ReservasAdmin() {
             </button>
           </div>
         </div>
+
+        {/* Banner Informativo si Clima Inestable está activo */}
+        {config.clima_inestable && (
+          <div className="bg-sky-950/40 border border-sky-500/40 rounded-xl p-3 flex items-center justify-between text-xs text-sky-200">
+            <div className="flex items-center gap-2">
+              <CloudRain size={17} className="text-sky-400 shrink-0" />
+              <span>
+                <strong>🌧️ Modo Clima Inestable Activo:</strong> Se suspenden las exigencias obligatorias de QR y no se sancionan ausencias ni cancelaciones hoy.
+              </span>
+            </div>
+            <button
+              onClick={handleToggleClima}
+              className="underline text-sky-300 hover:text-white font-bold ml-2 shrink-0 text-[11px]"
+            >
+              Desactivar
+            </button>
+          </div>
+        )}
 
         {/* Fila Acciones Secundarias / Desbloqueos */}
         <div className="grid grid-cols-3 gap-2">

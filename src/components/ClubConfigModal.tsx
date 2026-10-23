@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, QrCode, Calendar, Clock, Check, X, ShieldAlert, Megaphone } from 'lucide-react';
+import { Settings, QrCode, Calendar, Clock, Check, X, ShieldAlert, Megaphone, CloudRain } from 'lucide-react';
 import { Button } from './ui/Button';
 import { ClubConfig } from '../lib/config';
 
@@ -18,6 +18,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
   onSave,
   onOpenPenalizaciones,
 }) => {
+  const [climaInestable, setClimaInestable] = useState(Boolean(config.clima_inestable));
   const [qrActivo, setQrActivo] = useState(Boolean(config.validacion_qr_activa));
   const [mostrarAvisoQr, setMostrarAvisoQr] = useState(Boolean(config.mostrar_aviso_qr));
   const [diasAnticipacion, setDiasAnticipacion] = useState(config.dias_anticipacion || 2);
@@ -29,6 +30,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
   // Sincronizar siempre con la configuración real cuando se abre el modal o cambia la config
   useEffect(() => {
     if (isOpen) {
+      setClimaInestable(Boolean(config.clima_inestable));
       setQrActivo(Boolean(config.validacion_qr_activa));
       setMostrarAvisoQr(Boolean(config.mostrar_aviso_qr));
       setDiasAnticipacion(config.dias_anticipacion || 2);
@@ -42,6 +44,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
   const handleSave = async () => {
     setIsSaving(true);
     const res = await onSave({
+      clima_inestable: climaInestable,
       validacion_qr_activa: qrActivo,
       mostrar_aviso_qr: mostrarAvisoQr,
       dias_anticipacion: Number(diasAnticipacion),
@@ -71,7 +74,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-bold text-textPri">Reglas del Club</h3>
-              <p className="text-xs text-textSec">Ajustes de reservas y validación QR</p>
+              <p className="text-xs text-textSec">Ajustes de reservas, clima y validación QR</p>
             </div>
           </div>
           <button onClick={onClose} className="text-textSec hover:text-textPri p-1 rounded-md">
@@ -80,6 +83,38 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-4 text-sm min-h-0">
+          {/* Switch Clima Inestable (Opción B) */}
+          <div className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-colors ${
+            climaInestable 
+              ? 'bg-sky-950/40 border-sky-500/40 text-sky-200' 
+              : 'bg-[#0d0d0d] border-[#2a2a2a]'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CloudRain size={18} className={climaInestable ? 'text-sky-400' : 'text-textSec'} />
+                <span className="font-bold text-textPri">🌧️ Día con Clima Inestable</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setClimaInestable(!climaInestable)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  climaInestable ? 'bg-sky-500' : 'bg-[#333]'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    climaInestable ? 'translate-x-5 !bg-black' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+            <p className="text-xs text-textSec">
+              {climaInestable
+                ? '🌧️ ACTIVO: Se suspenden las exigencias de QR y las sanciones. Las cancelaciones y ausencias no generan penalidad.'
+                : 'Inactivo: Rige el sistema habitual de validación y sanciones por ausencia o cancelación tardía.'}
+            </p>
+          </div>
+
           {/* Switch Validación QR */}
           <div className="p-3.5 bg-[#0d0d0d] rounded-xl border border-[#2a2a2a] flex flex-col gap-2">
             <div className="flex items-center justify-between">

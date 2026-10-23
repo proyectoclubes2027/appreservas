@@ -19,9 +19,16 @@ CREATE TABLE IF NOT EXISTS configuracion_club (
   updated_at timestamp with time zone DEFAULT now()
 );
 
--- Asegurar columna mostrar_aviso_qr si la tabla ya existía previamente
+-- Asegurar columnas si la tabla ya existía previamente
 ALTER TABLE configuracion_club 
-ADD COLUMN IF NOT EXISTS mostrar_aviso_qr boolean DEFAULT false;
+ADD COLUMN IF NOT EXISTS mostrar_aviso_qr boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS clima_inestable boolean DEFAULT false;
+
+-- Columnas de cancelaciones en turnos
+ALTER TABLE turnos 
+ADD COLUMN IF NOT EXISTS cancelado_por_dni text,
+ADD COLUMN IF NOT EXISTS cancelacion_tipo text,
+ADD COLUMN IF NOT EXISTS cancelado_at timestamp with time zone;
 
 -- Insertar configuración por defecto si no existe
 INSERT INTO configuracion_club (id, validacion_qr_activa, dias_anticipacion, tolerancia_minutos, penalizacion_dias, mostrar_aviso_qr)

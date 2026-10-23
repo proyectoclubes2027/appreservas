@@ -29,6 +29,7 @@ export function useClubConfig() {
           ...DEFAULT_CONFIG,
           ...data,
           mostrar_aviso_qr: avisoVal,
+          clima_inestable: Boolean(data.clima_inestable),
         });
       }
     } catch (err) {

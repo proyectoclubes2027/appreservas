@@ -9,12 +9,8 @@ import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { loginOneSignal } from '../../lib/onesignal';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useClubConfig } from '../../lib/useClubConfig';
-
-const isValidUuid = (value: any): boolean => {
-  if (typeof value !== 'string') return false;
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(value);
-};
+import { CloudRain } from 'lucide-react';
+import { CancelarTurnoModal } from '../../components/CancelarTurnoModal';
 
 export default function Reservar() {
   const { socio } = useAuth();
@@ -44,6 +40,7 @@ export default function Reservar() {
   
   // State for edit mode
   const [editTurnoId, setEditTurnoId] = useState<string | null>(null);
+  const [turnoParaCancelar, setTurnoParaCancelar] = useState<any>(null);
 
   const { config } = useClubConfig();
   const diasVisibles = config.dias_anticipacion || 2;
@@ -413,6 +410,17 @@ export default function Reservar() {
 
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     
+    // Si el turno estaba cancelado sobre la hora de forma solidaria, ahora queda salvado
+    const { data: prevTurno } = await supabase
+      .from('turnos')
+      .select('id, cancelacion_tipo')
+      .eq('cancha_id', modalCanchaId)
+      .eq('fecha', dateStr)
+      .eq('hora_inicio', selectedShift.start)
+      .maybeSingle();
+
+    const nuevoTipo = prevTurno?.cancelacion_tipo === 'tardia_pendiente' ? 'tardia_salvada' : null;
+
     const { error } = await supabase.from('turnos').upsert({
       cancha_id: modalCanchaId,
       fecha: dateStr,
@@ -422,7 +430,8 @@ export default function Reservar() {
       acompanante: acomnames,
       estado: 'ocupado',
       validado: false,
-      validado_at: null
+      validado_at: null,
+      cancelacion_tipo: nuevoTipo
     }, { onConflict: 'cancha_id,fecha,hora_inicio' });
 
     if (error) {
@@ -430,64 +439,6 @@ export default function Reservar() {
     } else {
       fetchTurnos();
       setIsModalOpen(false);
-    }
-    setReservingLocal(false);
-  };
-
-  const cancelTurno = async (turno: any) => {
-    if (!confirm('¿Estás seguro de cancelar tu reserva?')) return;
-    setReservingLocal(true);
-    
-    const id = typeof turno === 'string' ? turno : turno?.id;
-    
-    let query = supabase
-      .from('turnos')
-      .update({ 
-        estado: 'libre', 
-        socio_dni: null, 
-        acompanante: null,
-        validado: false,
-        validado_at: null
-      });
-
-    if (id && isValidUuid(id)) {
-      query = query.eq('id', id);
-    } else if (typeof turno === 'object' && turno !== null) {
-      query = query
-        .eq('cancha_id', turno.cancha_id)
-        .eq('fecha', turno.fecha)
-        .eq('hora_inicio', turno.hora_inicio);
-    } else {
-      alert("Error: No se pudo identificar el turno a cancelar.");
-      setReservingLocal(false);
-      return;
-    }
-
-    const { error } = await query;
-    if (error) {
-      alert("Error al cancelar: " + error.message);
-    } else {
-      let finalId = id;
-      if ((!finalId || !isValidUuid(finalId)) && typeof turno === 'object' && turno !== null) {
-        const { data: updatedTurno } = await supabase
-          .from('turnos')
-          .select('id')
-          .eq('cancha_id', turno.cancha_id)
-          .eq('fecha', turno.fecha)
-          .eq('hora_inicio', turno.hora_inicio)
-          .single();
-        if (updatedTurno && isValidUuid(updatedTurno.id)) {
-          finalId = updatedTurno.id;
-        }
-      }
-
-      if (finalId && isValidUuid(finalId)) {
-        supabase.functions.invoke('notify-waitlist', {
-          body: { turno_id: finalId }
-        }).catch(err => console.error("Error al notificar lista de espera", err));
-      }
-      fetchTurnos();
-      setInfoTurno(null);
     }
     setReservingLocal(false);
   };
@@ -571,6 +522,21 @@ export default function Reservar() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Banner Clima Inestable si está activo */}
+      {config.clima_inestable && (
+        <div className="bg-sky-950/40 border border-sky-500/40 rounded-2xl p-4 text-xs text-sky-200 flex items-start gap-3 shadow-md animate-[fadeIn_0.2s_ease-out]">
+          <div className="p-2 bg-sky-500/20 text-sky-400 rounded-xl shrink-0 mt-0.5">
+            <CloudRain size={20} />
+          </div>
+          <div>
+            <p className="font-bold text-sky-300 text-sm">🌧️ Modo Clima Inestable Activo</p>
+            <p className="text-sky-200/90 mt-1 leading-relaxed">
+              El club se encuentra bajo condiciones climáticas inestables. <strong>El escaneo QR no es obligatorio</strong> y las ausencias o cancelaciones no generarán penalidad durante la jornada.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Welcome Card */}
       {socio && (
         <div className="flex justify-between items-center bg-[#161616] p-4 rounded-xl border border-[#2a2a2a] mb-2 shadow-sm">
@@ -751,7 +717,7 @@ export default function Reservar() {
                         <Button variant="secondary" fullWidth onClick={handleEditClick} disabled={reservingLocal}>
                           Editar Compañeros
                         </Button>
-                        <Button variant="danger" fullWidth onClick={() => cancelTurno(infoTurno)} disabled={reservingLocal}>
+                        <Button variant="danger" fullWidth onClick={() => { setTurnoParaCancelar(infoTurno); setInfoTurno(null); }} disabled={reservingLocal}>
                           {reservingLocal ? 'Procesando...' : 'Cancelar'}
                         </Button>
                       </div>
@@ -763,6 +729,21 @@ export default function Reservar() {
             })()}
           </div>
         </div>
+      )}
+
+      {/* Modal Semáforo de Cancelación */}
+      {turnoParaCancelar && socio && (
+        <CancelarTurnoModal
+          isOpen={!!turnoParaCancelar}
+          onClose={() => setTurnoParaCancelar(null)}
+          turno={turnoParaCancelar}
+          socioDni={socio.dni}
+          config={config}
+          onSuccess={(mensaje) => {
+            alert(mensaje);
+            fetchTurnos();
+          }}
+        />
       )}
     </div>
   );

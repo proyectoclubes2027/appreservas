@@ -7,6 +7,7 @@ export interface ClubConfig {
   tolerancia_minutos: number;
   penalizacion_dias: number;
   mostrar_aviso_qr: boolean;
+  clima_inestable: boolean;
 }
 
 export const DEFAULT_CONFIG: ClubConfig = {
@@ -15,5 +16,6 @@ export const DEFAULT_CONFIG: ClubConfig = {
   dias_anticipacion: 2,        // Hoy y mañana por defecto
   tolerancia_minutos: 20,      // 20 min antes y 20 min después
   penalizacion_dias: 14,       // 2 semanas
-  mostrar_aviso_qr: false      // Desactivado por defecto
+  mostrar_aviso_qr: false,     // Desactivado por defecto
+  clima_inestable: false,      // Desactivado por defecto
 };

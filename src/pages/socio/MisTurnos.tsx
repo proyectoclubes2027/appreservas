@@ -5,9 +5,11 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
-import { QrCode, CheckCircle2 } from 'lucide-react';
+import { QrCode, CheckCircle2, CloudRain, Clock } from 'lucide-react';
 import { QRScannerModal } from '../../components/QRScannerModal';
+import { CancelarTurnoModal } from '../../components/CancelarTurnoModal';
 import { useClubConfig } from '../../lib/useClubConfig';
+import { resolverCancelacionesTardiasVencidas } from '../../lib/cancelaciones';
 
 const isValidUuid = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -20,10 +22,14 @@ export default function MisTurnos() {
   const navigate = useNavigate();
   const { config } = useClubConfig();
   const [turnos, setTurnos] = useState<any[]>([]);
+  const [turnosTardios, setTurnosTardios] = useState<any[]>([]);
   const [loadingLocal, setLoadingLocal] = useState(true);
 
   // Estados para modal de escaneo QR
   const [scannerTurno, setScannerTurno] = useState<any>(null);
+
+  // Estado para modal semáforo de cancelación
+  const [turnoParaCancelar, setTurnoParaCancelar] = useState<any>(null);
 
   useEffect(() => {
     fetchMisTurnos();
@@ -32,6 +38,10 @@ export default function MisTurnos() {
   const fetchMisTurnos = async () => {
     if (!socio) return;
     setLoadingLocal(true);
+
+    // Resolver turnos tardíos vencidos antes de listar
+    await resolverCancelacionesTardiasVencidas(config).catch(console.warn);
+
     const { data, error } = await supabase
       .from('turnos')
       .select('*, canchas(nombre)')
@@ -42,62 +52,22 @@ export default function MisTurnos() {
     if (!error && data) {
       setTurnos(data);
     }
-    setLoadingLocal(false);
-  };
 
-  const cancelTurno = async (turno: any) => {
-    if (!confirm('¿Estás seguro de cancelar este turno?')) return;
-    
-    const id = typeof turno === 'string' ? turno : turno?.id;
-    
-    let query = supabase
+    // Traer turnos cancelados sobre la hora por este socio para mostrar su estado solidario
+    const { data: tardiosData } = await supabase
       .from('turnos')
-      .update({ 
-        estado: 'libre', 
-        socio_dni: null, 
-        acompanante: null,
-        validado: false,
-        validado_at: null
-      });
+      .select('*, canchas(nombre)')
+      .eq('cancelado_por_dni', socio.dni)
+      .in('cancelacion_tipo', ['tardia_pendiente', 'tardia_salvada'])
+      .order('fecha', { ascending: false })
+      .order('hora_inicio', { ascending: false })
+      .limit(5);
 
-    if (id && isValidUuid(id)) {
-      query = query.eq('id', id);
-    } else if (typeof turno === 'object' && turno !== null) {
-      query = query
-        .eq('cancha_id', turno.cancha_id)
-        .eq('fecha', turno.fecha)
-        .eq('hora_inicio', turno.hora_inicio);
-    } else {
-      alert("Error: No se pudo identificar el turno a cancelar.");
-      return;
+    if (tardiosData) {
+      setTurnosTardios(tardiosData);
     }
-      
-    const { error } = await query;
-      
-    if (error) {
-      alert("Error al cancelar: " + error.message);
-    } else {
-      let finalId = id;
-      if ((!finalId || !isValidUuid(finalId)) && typeof turno === 'object' && turno !== null) {
-        const { data: updatedTurno } = await supabase
-          .from('turnos')
-          .select('id')
-          .eq('cancha_id', turno.cancha_id)
-          .eq('fecha', turno.fecha)
-          .eq('hora_inicio', turno.hora_inicio)
-          .single();
-        if (updatedTurno && isValidUuid(updatedTurno.id)) {
-          finalId = updatedTurno.id;
-        }
-      }
 
-      if (finalId && isValidUuid(finalId)) {
-        supabase.functions.invoke('notify-waitlist', {
-          body: { turno_id: finalId }
-        }).catch(err => console.error("Error al notificar lista de espera", err));
-      }
-      fetchMisTurnos();
-    }
+    setLoadingLocal(false);
   };
 
   /**
@@ -159,6 +129,63 @@ export default function MisTurnos() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Banner Informativo de Clima Inestable para Socios */}
+      {config.clima_inestable && (
+        <div className="bg-sky-950/40 border border-sky-500/40 rounded-2xl p-4 text-xs text-sky-200 flex items-start gap-3 shadow-md animate-[fadeIn_0.2s_ease-out]">
+          <div className="p-2 bg-sky-500/20 text-sky-400 rounded-xl shrink-0 mt-0.5">
+            <CloudRain size={20} />
+          </div>
+          <div>
+            <p className="font-bold text-sky-300 text-sm">🌧️ Modo Clima Inestable Activo</p>
+            <p className="text-sky-200/90 mt-1 leading-relaxed">
+              Debido a las condiciones climáticas del día de hoy, <strong>el escaneo de código QR en la cancha no es obligatorio</strong> y podés cancelar tus reservas en cualquier momento sin ninguna penalidad ni sanción.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Sección Informativa: Turnos Cancelados sobre la hora (Solidarios) */}
+      {turnosTardios.length > 0 && (
+        <div className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-2.5">
+          <div className="flex items-center gap-2">
+            <Clock size={16} className="text-amber-400" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-textPri">
+              Cancelaciones sobre la hora (Sistema Solidario)
+            </h3>
+          </div>
+          <div className="flex flex-col gap-2">
+            {turnosTardios.map((t) => {
+              const esSalvado = t.cancelacion_tipo === 'tardia_salvada';
+              return (
+                <div
+                  key={t.id}
+                  className={`p-3 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs ${
+                    esSalvado
+                      ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
+                      : 'bg-amber-950/20 border-amber-500/30 text-amber-200'
+                  }`}
+                >
+                  <div>
+                    <span className="font-bold text-white mr-2">{t.canchas?.nombre}</span>
+                    <span className="font-mono text-textSec mr-2">{t.fecha} ({(t.hora_inicio || '').slice(0, 5)}hs)</span>
+                    <p className="text-[11px] mt-0.5 opacity-90">
+                      {esSalvado
+                        ? '✓ ¡Salvado! Otro socio tomó tu cancha liberada. Quedaste libre de sanción.'
+                        : `⏳ Esperando reemplazo: si otro socio reserva la cancha antes de las ${(t.hora_inicio || '').slice(0, 5)}hs, no recibirás sanción.`}
+                    </p>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 self-start sm:self-auto ${
+                    esSalvado ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300 animate-pulse'
+                  }`}>
+                    {esSalvado ? 'Sin Sanción' : 'Pendiente de Reserva'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <h2 className="text-xl font-bold uppercase tracking-wide text-textSec">Mis Turnos</h2>
       
       {loadingLocal ? (
@@ -239,7 +266,7 @@ export default function MisTurnos() {
                       <Button 
                         variant="danger" 
                         className="text-xs px-3 py-2" 
-                        onClick={() => cancelTurno(turno)}
+                        onClick={() => setTurnoParaCancelar(turno)}
                       >
                         Cancelar
                       </Button>
@@ -264,6 +291,21 @@ export default function MisTurnos() {
           expectedCanchaId={scannerTurno.cancha_id}
           canchaNombre={scannerTurno.canchas?.nombre || `Cancha ${scannerTurno.cancha_id}`}
           onSuccess={handleTurnoValidated}
+        />
+      )}
+
+      {/* Modal Semáforo de Cancelación */}
+      {turnoParaCancelar && socio && (
+        <CancelarTurnoModal
+          isOpen={!!turnoParaCancelar}
+          onClose={() => setTurnoParaCancelar(null)}
+          turno={turnoParaCancelar}
+          socioDni={socio.dni}
+          config={config}
+          onSuccess={(mensaje) => {
+            alert(mensaje);
+            fetchMisTurnos();
+          }}
         />
       )}
     </div>
