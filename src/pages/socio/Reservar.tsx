@@ -9,9 +9,10 @@ import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { loginOneSignal } from '../../lib/onesignal';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useClubConfig } from '../../lib/useClubConfig';
-import { CloudRain } from 'lucide-react';
+import { CloudRain, ShieldAlert } from 'lucide-react';
 import { CancelarTurnoModal } from '../../components/CancelarTurnoModal';
 import { resolverTurnosSinValidar } from '../../lib/cancelaciones';
+import { useSocioSancion } from '../../lib/useSocioSancion';
 
 export default function Reservar() {
   const { socio } = useAuth();
@@ -44,6 +45,7 @@ export default function Reservar() {
   const [turnoParaCancelar, setTurnoParaCancelar] = useState<any>(null);
 
   const { config } = useClubConfig();
+  const { isSancionado, sancion } = useSocioSancion();
   const diasVisibles = config.dias_anticipacion || 2;
   const dates = Array.from({ length: diasVisibles }).map((_, i) => addDays(startOfDay(new Date()), i));
 
@@ -507,6 +509,10 @@ export default function Reservar() {
 
     const handleClick = () => {
       if (isVencido) return;
+      if (isSancionado && sancion) {
+        alert(`Estás inhabilitado para reservar hasta el ${format(parseISO(sancion.fecha_fin), 'dd/MM/yyyy')}.\n\nMotivo: ${sancion.motivo}`);
+        return;
+      }
       if ((socio?.mesesDeuda ?? 0) >= 4) {
          alert("Posees meses impagos. Por favor regulariza tu situación para reservar.");
          return;
@@ -555,6 +561,24 @@ export default function Reservar() {
           </div>
           <div className="w-12 h-12 rounded-full bg-[#0d0d0d] flex items-center justify-center border-2 border-primary">
             <span className="text-lg font-bold text-textPri uppercase">{socio.nombre.charAt(0)}{socio.apellido.charAt(0)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Alerta de Sanción en pantalla de reservas */}
+      {isSancionado && sancion && (
+        <div className="bg-gradient-to-r from-red-950/80 via-red-900/40 to-[#1a0a0a] border border-red-500/50 rounded-2xl p-4 text-red-200 flex items-start gap-3 shadow-lg -mt-2 mb-2 animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-red-400">
+            <ShieldAlert size={22} />
+          </div>
+          <div>
+            <p className="font-bold text-red-300 text-sm">Estás inhabilitado para reservar</p>
+            <p className="text-xs text-red-100/90 mt-1 leading-relaxed">
+              Tu cuenta tiene una sanción activa hasta el <strong>{format(parseISO(sancion.fecha_fin), 'dd/MM/yyyy')}</strong>. No podés seleccionar horarios libres ni crear reservas.
+            </p>
+            <p className="text-[11px] text-red-300/80 mt-1.5 font-medium italic">
+              Motivo: "{sancion.motivo}"
+            </p>
           </div>
         </div>
       )}

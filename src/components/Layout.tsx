@@ -6,6 +6,7 @@ import { NotificationBanner } from './NotificationBanner';
 import { NewsPopup } from './NewsPopup';
 import { ProfileCompletionModal } from './ProfileCompletionModal';
 import { QRAnnouncementBanner } from './QRAnnouncementBanner';
+import { SancionBanner } from './SancionBanner';
 import { forzarActualizacionApp } from '../lib/pwa-update';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -61,6 +62,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Banner de notificaciones (solo si el perfil está completo) */}
       {isSocio && !isProfileIncomplete && <NotificationBanner />}
+
+      {/* Pop-up y Banner de Sanción (solo si el socio está inhabilitado) */}
+      {isSocio && !isProfileIncomplete && <SancionBanner />}
 
       {/* Main Content */}
       <main className={`flex-1 overflow-y-auto pb-20 p-4 ${isProfileIncomplete ? 'pointer-events-none blur-sm' : ''}`}>

@@ -322,12 +322,16 @@ export async function resolverTurnosSinValidar(config?: ClubConfig): Promise<num
     const tolerancia = config?.tolerancia_minutos || 20;
     const diasSancion = config?.penalizacion_dias || 7;
 
+    // Solo auditar turnos a partir del inicio de implementación del sistema QR (2026-10-26)
+    const FECHA_MINIMA_QR = '2026-10-26';
+
     const { data: turnosSinValidar, error } = await supabase
       .from('turnos')
       .select('*, canchas(nombre)')
       .eq('estado', 'ocupado')
       .eq('validado', false)
       .eq('sancion_qr_aplicada', false)
+      .gte('fecha', FECHA_MINIMA_QR)
       .lte('fecha', todayStr);
 
     if (error || !turnosSinValidar || turnosSinValidar.length === 0) return 0;
