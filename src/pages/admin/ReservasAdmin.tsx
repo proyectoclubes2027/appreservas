@@ -9,7 +9,7 @@ import { Settings, ShieldAlert, CloudRain } from 'lucide-react';
 import { useClubConfig } from '../../lib/useClubConfig';
 import { ClubConfigModal } from '../../components/ClubConfigModal';
 import { PenalizacionesModal } from '../../components/PenalizacionesModal';
-import { resolverCancelacionesTardiasVencidas } from '../../lib/cancelaciones';
+import { resolverCancelacionesTardiasVencidas, resolverTurnosSinValidar } from '../../lib/cancelaciones';
 
 const isValidUuid = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -45,6 +45,8 @@ export default function ReservasAdmin() {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isPenalizacionesModalOpen, setIsPenalizacionesModalOpen] = useState(false);
 
+  const [sociosMap, setSociosMap] = useState<Map<string, string>>(new Map());
+
   const today = startOfDay(new Date());
   let dates = Array.from({ length: 7 }).map((_, i) => addDays(today, i));
   
@@ -54,11 +56,21 @@ export default function ReservasAdmin() {
     dates.sort((a, b) => a.getTime() - b.getTime());
   }
 
+  const fetchSociosMap = async () => {
+    const { data } = await supabase.from('socios').select('dni, nombre, apellido');
+    if (data) {
+      const map = new Map<string, string>();
+      data.forEach((s: any) => map.set(s.dni, `${s.apellido}, ${s.nombre}`));
+      setSociosMap(map);
+    }
+  };
+
   useEffect(() => {
     const initPage = async () => {
       setLoadingLocal(true);
-      await Promise.all([fetchTurnos(), fetchCanchas()]);
+      await Promise.all([fetchTurnos(), fetchCanchas(), fetchSociosMap()]);
       resolverCancelacionesTardiasVencidas(config).catch(console.warn);
+      resolverTurnosSinValidar(config).catch(console.warn);
       setLoadingLocal(false);
     };
     initPage();
@@ -669,16 +681,40 @@ export default function ReservasAdmin() {
                 <div className="mt-2.5">
                   {infoTurno.validado ? (
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-md bg-emerald-950 text-emerald-400 border border-emerald-500/40">
-                      ✓ Turno Validado con QR
+                      ✓ Turno 100% Validado con QR
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-400 border border-zinc-700">
-                      Pendiente / Sin Validar
+                      Pendiente / Validación Incompleta
                     </span>
                   )}
                 </div>
                 
-                {infoTurno.acompanante && (
+                {infoTurno.participantes_dnis && infoTurno.participantes_dnis.length > 0 && (
+                  <div className="mt-4 pt-3 border-t border-[#2a2a2a]">
+                    <p className="text-xs font-bold text-textSec mb-2 uppercase">Validación individual de jugadores</p>
+                    <div className="flex flex-col gap-1.5">
+                      {infoTurno.participantes_dnis.map((dni: string) => {
+                        const isGuest = dni === '123987456';
+                        const isTitular = dni === infoTurno.socio_dni;
+                        const validados: string[] = Array.isArray(infoTurno.validados_dnis) ? infoTurno.validados_dnis : [];
+                        const isValidated = isGuest ? validados.includes(infoTurno.socio_dni) : validados.includes(dni);
+                        const nombre = isGuest ? 'Invitado Especial' : sociosMap.get(dni) || (isTitular ? `${infoTurno.socios?.apellido || ''}, ${infoTurno.socios?.nombre || ''}` : `DNI ${dni}`);
+
+                        return (
+                          <div key={dni} className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded bg-zinc-900/60 border border-zinc-800">
+                            <span className="text-zinc-200">{nombre} {isTitular && <span className="text-primary text-[10px] uppercase font-bold">(Titular)</span>}</span>
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${isValidated ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/40' : 'bg-amber-950/60 text-amber-300 border border-amber-500/30'}`}>
+                              {isValidated ? '✓ Validado' : 'Pendiente QR'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {infoTurno.acompanante && (!infoTurno.participantes_dnis || infoTurno.participantes_dnis.length === 0) && (
                   <div className="mt-4 pt-4 border-t border-[#2a2a2a]">
                     <p className="text-xs font-bold text-textSec mb-1 uppercase">Jugadores adicionales</p>
                     <p className="text-sm text-textPri">{infoTurno.acompanante}</p>

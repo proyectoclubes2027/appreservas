@@ -134,6 +134,9 @@ export async function ejecutarCancelacion(
         estado: 'libre',
         socio_dni: null,
         acompanante: null,
+        participantes_dnis: [],
+        validados_dnis: [],
+        sancion_qr_aplicada: false,
         validado: false,
         validado_at: null,
         cancelado_por_dni: socioDni,
@@ -268,3 +271,127 @@ export async function resolverCancelacionesTardiasVencidas(config?: ClubConfig):
     return 0;
   }
 }
+
+/**
+ * Verifica si todos los socios participantes (excluyendo invitados especiales) ya validaron su presencia.
+ */
+export function estanTodosValidados(
+  participantesDnis?: string[] | null,
+  validadosDnis?: string[] | null,
+  socioDniTitular?: string | null
+): boolean {
+  const parts = (participantesDnis && participantesDnis.length > 0)
+    ? participantesDnis
+    : (socioDniTitular ? [socioDniTitular] : []);
+
+  // Filtrar invitado especial '123987456'
+  const sociosRequeridos = parts.filter(d => d && d !== '123987456');
+  if (sociosRequeridos.length === 0) return true;
+
+  const validadosSet = new Set(validadosDnis || []);
+  return sociosRequeridos.every(d => validadosSet.has(d));
+}
+
+/**
+ * Revisa turnos cuyo horario ya venció (o expiró la ventana de tolerancia)
+ * y que no completaron la validación QR de todos los jugadores.
+ * Aplica sanciones a TODOS los socios participantes registrados en el turno.
+ */
+export async function resolverTurnosSinValidar(config?: ClubConfig): Promise<number> {
+  try {
+    const qrActivo = Boolean(config?.validacion_qr_activa);
+    const esClimaInestable = Boolean(config?.clima_inestable);
+
+    // Si la validación no está activa o el club está en modo clima inestable, no se sanciona
+    if (!qrActivo || esClimaInestable) return 0;
+
+    // 1. Intentar resolver vía RPC en Supabase primero (más rápido y atómico)
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('resolver_turnos_sin_validar_sql');
+      if (!rpcErr && rpcRes && typeof rpcRes.sanciones_aplicadas === 'number') {
+        return rpcRes.sanciones_aplicadas;
+      }
+    } catch (_) {
+      // Continuar con fallback client-side
+    }
+
+    // 2. Fallback client-side si el RPC no estuviera disponible
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const tolerancia = config?.tolerancia_minutos || 20;
+    const diasSancion = config?.penalizacion_dias || 14;
+
+    const { data: turnosSinValidar, error } = await supabase
+      .from('turnos')
+      .select('*, canchas(nombre)')
+      .eq('estado', 'ocupado')
+      .eq('validado', false)
+      .eq('sancion_qr_aplicada', false)
+      .lte('fecha', todayStr);
+
+    if (error || !turnosSinValidar || turnosSinValidar.length === 0) return 0;
+
+    let sancionesAplicadas = 0;
+
+    for (const t of turnosSinValidar) {
+      const esFechaAnterior = t.fecha < todayStr;
+      let windowExpired = esFechaAnterior;
+
+      if (!windowExpired && t.fecha === todayStr && t.hora_inicio) {
+        const [h, m] = t.hora_inicio.slice(0, 5).split(':').map(Number);
+        const startMinutes = h * 60 + m;
+        // La ventana de escaneo termina en startMinutes + tolerancia
+        windowExpired = currentMinutes > (startMinutes + tolerancia);
+      }
+
+      if (windowExpired) {
+        const participants: string[] = (t.participantes_dnis && t.participantes_dnis.length > 0)
+          ? t.participantes_dnis
+          : (t.socio_dni ? [t.socio_dni] : []);
+
+        const sociosASancionar = participants.filter((d: string) => d && d !== '123987456');
+
+        // Si realmente estaban todos validados, marcar como validado sin sancionar
+        const validadosList: string[] = t.validados_dnis || [];
+        const todosValidados = sociosASancionar.length > 0 && sociosASancionar.every(d => validadosList.includes(d));
+
+        if (todosValidados) {
+          await supabase
+            .from('turnos')
+            .update({ validado: true, validado_at: new Date().toISOString() })
+            .eq('id', t.id);
+          continue;
+        }
+
+        // Si falta alguno por validar, se sanciona a TODOS los participantes registrados
+        const canchaNombre = t.canchas?.nombre || `Cancha ${t.cancha_id}`;
+        const horaStr = (t.hora_inicio || '').slice(0, 5);
+        const fechaFinStr = format(addDays(new Date(), diasSancion), 'yyyy-MM-dd');
+
+        for (const socioDni of sociosASancionar) {
+          await supabase.from('penalizaciones').insert({
+            socio_dni: socioDni,
+            turno_id: t.id,
+            fecha_inicio: todayStr,
+            fecha_fin: fechaFinStr,
+            motivo: `No se completó la validación QR de los participantes (${canchaNombre}, ${t.fecha} ${horaStr}hs) - Sanción a todos los jugadores`,
+            activa: true,
+          });
+          sancionesAplicadas++;
+        }
+
+        await supabase
+          .from('turnos')
+          .update({ sancion_qr_aplicada: true })
+          .eq('id', t.id);
+      }
+    }
+
+    return sancionesAplicadas;
+  } catch (err) {
+    console.warn('Error resolviendo turnos sin validar:', err);
+    return 0;
+  }
+}
+

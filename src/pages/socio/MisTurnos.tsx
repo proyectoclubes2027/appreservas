@@ -5,11 +5,11 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
-import { QrCode, CheckCircle2, CloudRain, Clock } from 'lucide-react';
+import { QrCode, CheckCircle2, CloudRain, Clock, Users, ShieldAlert } from 'lucide-react';
 import { QRScannerModal } from '../../components/QRScannerModal';
 import { CancelarTurnoModal } from '../../components/CancelarTurnoModal';
 import { useClubConfig } from '../../lib/useClubConfig';
-import { resolverCancelacionesTardiasVencidas } from '../../lib/cancelaciones';
+import { resolverCancelacionesTardiasVencidas, resolverTurnosSinValidar, estanTodosValidados } from '../../lib/cancelaciones';
 
 const isValidUuid = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -21,6 +21,7 @@ export default function MisTurnos() {
   const { socio } = useAuth();
   const navigate = useNavigate();
   const { config } = useClubConfig();
+  const [sociosMap, setSociosMap] = useState<Map<string, string>>(new Map());
   const [turnos, setTurnos] = useState<any[]>([]);
   const [turnosTardios, setTurnosTardios] = useState<any[]>([]);
   const [loadingLocal, setLoadingLocal] = useState(true);
@@ -39,13 +40,25 @@ export default function MisTurnos() {
     if (!socio) return;
     setLoadingLocal(true);
 
-    // Resolver turnos tardíos vencidos antes de listar
-    await resolverCancelacionesTardiasVencidas(config).catch(console.warn);
+    // Resolver turnos tardíos vencidos y turnos sin validar antes de listar
+    await Promise.all([
+      resolverCancelacionesTardiasVencidas(config).catch(console.warn),
+      resolverTurnosSinValidar(config).catch(console.warn),
+    ]);
 
+    // Cargar nombres de socios para mapear en la lista de participantes
+    const { data: allSocios } = await supabase.from('socios').select('dni, nombre, apellido');
+    if (allSocios) {
+      const sMap = new Map<string, string>();
+      allSocios.forEach((s: any) => sMap.set(s.dni, `${s.apellido}, ${s.nombre}`));
+      setSociosMap(sMap);
+    }
+
+    // Traer turnos donde el socio sea titular O forme parte de participantes_dnis
     const { data, error } = await supabase
       .from('turnos')
-      .select('*, canchas(nombre)')
-      .eq('socio_dni', socio.dni)
+      .select('*, canchas(nombre), socios(nombre, apellido)')
+      .or(`socio_dni.eq.${socio.dni},participantes_dnis.cs.{${socio.dni}}`)
       .order('fecha', { ascending: false })
       .order('hora_inicio', { ascending: false });
 
@@ -72,11 +85,15 @@ export default function MisTurnos() {
 
   /**
    * Determina si el turno se encuentra dentro de la ventana de validación
-   * (tolerancia: 20 min antes y 20 min después del horario de inicio)
+   * y si el socio actual aún NO ha registrado su presencia.
    */
   const canValidateTurno = (turno: any): boolean => {
-    if (turno.validado) return false;
     if (turno.estado !== 'ocupado') return false;
+    if (!socio) return false;
+
+    // Si el socio actual ya validó su propia presencia, no necesita volver a escanear
+    const validados: string[] = Array.isArray(turno.validados_dnis) ? turno.validados_dnis : [];
+    if (validados.includes(socio.dni)) return false;
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     if (turno.fecha !== todayStr) return false;
@@ -97,14 +114,39 @@ export default function MisTurnos() {
   };
 
   const handleTurnoValidated = async () => {
-    if (!scannerTurno) return;
+    if (!scannerTurno || !socio) return;
 
     try {
+      const prevValidados: string[] = Array.isArray(scannerTurno.validados_dnis)
+        ? [...scannerTurno.validados_dnis]
+        : [];
+
+      if (!prevValidados.includes(socio.dni)) {
+        prevValidados.push(socio.dni);
+      }
+
+      // Obtener participantes declarados
+      const participants: string[] = (scannerTurno.participantes_dnis && scannerTurno.participantes_dnis.length > 0)
+        ? scannerTurno.participantes_dnis
+        : (scannerTurno.socio_dni ? [scannerTurno.socio_dni] : []);
+
+      // Si el socio actual es el titular y hay Invitado Especial ('123987456'),
+      // el escaneo del titular valida automáticamente al Invitado Especial
+      if (socio.dni === scannerTurno.socio_dni && participants.includes('123987456')) {
+        if (!prevValidados.includes('123987456')) {
+          prevValidados.push('123987456');
+        }
+      }
+
+      // Evaluar si todos los socios requeridos completaron la validación
+      const allCompleted = estanTodosValidados(participants, prevValidados, scannerTurno.socio_dni);
+
       let query = supabase
         .from('turnos')
         .update({
-          validado: true,
-          validado_at: new Date().toISOString()
+          validados_dnis: prevValidados,
+          validado: allCompleted,
+          validado_at: allCompleted ? new Date().toISOString() : scannerTurno.validado_at,
         });
 
       if (scannerTurno.id && isValidUuid(scannerTurno.id)) {
@@ -120,6 +162,11 @@ export default function MisTurnos() {
       if (error) {
         alert('Error al guardar la validación: ' + error.message);
       } else {
+        if (allCompleted) {
+          alert('✓ ¡Turno 100% validado con éxito! Todos los jugadores registraron su presencia en la cancha.');
+        } else {
+          alert('✓ ¡Validaste tu presencia con éxito! Recordá que tus compañeros de turno también deben escanear el QR en la cancha.');
+        }
         await fetchMisTurnos();
       }
     } catch (e: any) {
@@ -207,54 +254,170 @@ export default function MisTurnos() {
               ? format(dateObj, "EEEE d 'de' MMMM", { locale: es })
               : dateStr;
 
+            const esTitular = turno.socio_dni === socio?.dni;
+            const validadosList: string[] = Array.isArray(turno.validados_dnis) ? turno.validados_dnis : [];
+            const userValidated = socio ? validadosList.includes(socio.dni) : false;
+
+            // Obtener lista completa de participantes
+            const rawParts: string[] = (turno.participantes_dnis && turno.participantes_dnis.length > 0)
+              ? turno.participantes_dnis
+              : (turno.socio_dni ? [turno.socio_dni] : []);
+
+            const sociosRequeridos = rawParts.filter(d => d && d !== '123987456');
+            const validadosCount = sociosRequeridos.filter(d => validadosList.includes(d)).length;
+
             return (
               <div 
                 key={turno.id} 
-                className={`bg-surface border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                  isValidable ? 'border-primary ring-1 ring-primary/40' : 'border-border'
+                className={`bg-surface border rounded-xl p-4 sm:p-5 flex flex-col gap-3 transition-colors ${
+                  isValidable 
+                    ? 'border-emerald-500/60 ring-2 ring-emerald-500/20 bg-emerald-950/10' 
+                    : turno.validado 
+                    ? 'border-emerald-900/40 bg-surface' 
+                    : 'border-border'
                 }`}
               >
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-xs text-textSec font-bold uppercase">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#222] pb-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xs text-textSec font-bold uppercase tracking-wider">
                       {formattedDate}
                     </p>
+                    {esTitular ? (
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                        Titular
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-500/30">
+                        Acompañante
+                      </span>
+                    )}
+
                     {turno.validado ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/40">
-                        <CheckCircle2 size={12} /> Validado en Cancha
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-950/90 text-emerald-400 border border-emerald-500/40">
+                        <CheckCircle2 size={12} /> Turno 100% Validado
+                      </span>
+                    ) : userValidated ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-sky-950/90 text-sky-400 border border-sky-500/40">
+                        <CheckCircle2 size={12} /> Tu Presencia Validada
                       </span>
                     ) : isValidable ? (
                       <span className="animate-pulse inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                        Validación Disponible
+                        <Clock size={12} /> Escaneo QR Disponible
                       </span>
-                    ) : null}
+                    ) : isFuture ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-700">
+                        Programado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-red-950/60 text-red-400 border border-red-500/30">
+                        Sin Validación Completa
+                      </span>
+                    )}
                   </div>
 
-                  <p className="text-lg font-bold text-textPri mb-1">
-                    {(turno.hora_inicio || '').slice(0, 5)} - {(turno.hora_fin || '').slice(0, 5)}
-                  </p>
-                  <p className="text-sm font-medium text-textPri">
-                    {turno.canchas?.nombre}
-                  </p>
-                  {turno.acompanante && (
-                    <p className="text-xs text-textSec mt-1">Acompañante: {turno.acompanante}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-textPri">
+                      {(turno.hora_inicio || '').slice(0, 5)} - {(turno.hora_fin || '').slice(0, 5)} hs
+                    </span>
+                    <span className="text-xs text-textSec">• {turno.canchas?.nombre}</span>
+                  </div>
+                </div>
+
+                {/* Sección de Participantes y estado de escaneo individual */}
+                <div className="flex flex-col gap-1.5 py-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-textSec uppercase tracking-wider flex items-center gap-1.5">
+                      <Users size={13} className="text-textSec" />
+                      Jugadores del Turno ({validadosCount}/{sociosRequeridos.length} validados):
+                    </span>
+                    {config.validacion_qr_activa && !config.clima_inestable && (
+                      <span className="text-[10px] text-amber-400/90 font-medium hidden sm:inline">
+                        * Todos los jugadores deben validar para evitar sanciones
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                    {rawParts.map((partDni) => {
+                      const isGuest = partDni === '123987456';
+                      const isMe = partDni === socio?.dni;
+                      const isPartTitular = partDni === turno.socio_dni;
+                      const nombre = isGuest
+                        ? 'Invitado Especial'
+                        : sociosMap.get(partDni) || (isPartTitular ? `${turno.socios?.apellido || ''}, ${turno.socios?.nombre || ''}` : `DNI ${partDni}`);
+
+                      // El invitado especial queda validado si el titular ya escaneó
+                      const isGuestValidated = isGuest && validadosList.includes(turno.socio_dni);
+                      const isPartValidated = isGuest ? isGuestValidated : validadosList.includes(partDni);
+
+                      return (
+                        <div
+                          key={partDni}
+                          className={`p-2 rounded-lg border flex items-center justify-between text-xs transition-colors ${
+                            isPartValidated
+                              ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
+                              : 'bg-zinc-900/60 border-zinc-800 text-zinc-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            {isPartValidated ? (
+                              <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                            ) : (
+                              <Clock size={14} className="text-amber-400 shrink-0" />
+                            )}
+                            <span className="font-medium truncate">
+                              {nombre} {isMe && <span className="text-primary font-bold">(Vos)</span>}
+                            </span>
+                            {isPartTitular && (
+                              <span className="text-[10px] text-zinc-500 uppercase">(Titular)</span>
+                            )}
+                          </div>
+
+                          <span
+                            className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded shrink-0 ${
+                              isPartValidated
+                                ? 'bg-emerald-500/20 text-emerald-300'
+                                : 'bg-zinc-800 text-zinc-400'
+                            }`}
+                          >
+                            {isPartValidated ? '✓ Validado' : 'Pendiente QR'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {!turno.validado && isValidable && !userValidated && (
+                    <p className="text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 p-2 rounded-lg mt-1 flex items-center gap-1.5">
+                      <ShieldAlert size={14} className="text-amber-400 shrink-0" />
+                      <span>
+                        Recordá escanear el código QR en la entrada de la cancha. Si algún jugador no valida, la sanción aplicará a todos los participantes.
+                      </span>
+                    </p>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                  {/* Botón para escanear QR si está en el rango de horario */}
+                {/* Barra de Acciones */}
+                <div className="flex items-center justify-end gap-2 flex-wrap sm:flex-nowrap pt-2 border-t border-[#1c1c1c]">
+                  {/* Botón para escanear QR si está en el rango de horario y aún no validó */}
                   {isValidable && (
                     <Button
                       variant="primary"
-                      className="text-xs px-3 py-2 font-bold flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-black border-none shadow-lg animate-bounce"
+                      className="text-xs px-3.5 py-2 font-bold flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-black border-none shadow-lg animate-bounce"
                       onClick={() => setScannerTurno(turno)}
                     >
                       <QrCode size={16} />
-                      Validar QR
+                      Validar mi presencia con QR
                     </Button>
                   )}
 
-                  {isFuture && turno.estado === 'ocupado' ? (
+                  {userValidated && !turno.validado && (
+                    <span className="text-xs px-2.5 py-1.5 rounded-md bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 font-bold flex items-center gap-1">
+                      <CheckCircle2 size={13} /> Tu QR ya fue registrado
+                    </span>
+                  )}
+
+                  {isFuture && turno.estado === 'ocupado' && esTitular && (
                     <>
                       <Button 
                         variant="secondary" 
@@ -271,11 +434,13 @@ export default function MisTurnos() {
                         Cancelar
                       </Button>
                     </>
-                  ) : !turno.validado ? (
-                    <span className="text-xs text-textSec px-2 py-1 bg-[#0d0d0d] rounded border border-[#2a2a2a] uppercase font-bold">
+                  )}
+
+                  {!isFuture && !turno.validado && (
+                    <span className="text-xs text-textSec px-2.5 py-1 bg-[#0d0d0d] rounded border border-[#2a2a2a] uppercase font-bold">
                       Completado
                     </span>
-                  ) : null}
+                  )}
                 </div>
               </div>
             );

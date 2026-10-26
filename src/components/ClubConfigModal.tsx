@@ -138,7 +138,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
             </div>
             <p className="text-xs text-textSec">
               {qrActivo
-                ? 'Activo: La app exige validar el turno en la cancha y penaliza las ausencias.'
+                ? 'Activo: Todos los jugadores del turno deben validar en la cancha. Si alguno no valida, se sanciona a los participantes del turno.'
                 : 'Desactivado (Prueba): Los socios pueden escanear para probar la cámara, pero NO se sanciona.'}
             </p>
           </div>

@@ -4,15 +4,20 @@ import { ShieldCheck, Trash2, X, AlertCircle } from 'lucide-react';
 import { Button } from './ui/Button';
 import { format, parseISO } from 'date-fns';
 
+import { useClubConfig } from '../lib/useClubConfig';
+import { resolverTurnosSinValidar } from '../lib/cancelaciones';
+
 interface PenalizacionesModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 export const PenalizacionesModal: React.FC<PenalizacionesModalProps> = ({ isOpen, onClose }) => {
+  const { config } = useClubConfig();
   const [penalizaciones, setPenalizaciones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -85,6 +90,18 @@ export const PenalizacionesModal: React.FC<PenalizacionesModalProps> = ({ isOpen
     }
   };
 
+  const handleCheckNow = async () => {
+    setIsChecking(true);
+    const count = await resolverTurnosSinValidar(config);
+    if (count > 0) {
+      alert(`Control de QR ejecutado: se aplicaron ${count} nuevas sanciones a participantes de turnos vencidos sin validación.`);
+    } else {
+      alert('Control de QR ejecutado: no se encontraron nuevos turnos vencidos pendientes de sanción.');
+    }
+    await fetchPenalizaciones();
+    setIsChecking(false);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -101,9 +118,19 @@ export const PenalizacionesModal: React.FC<PenalizacionesModalProps> = ({ isOpen
               <p className="text-xs text-textSec">Levantar inhabilitaciones por lluvia, enfermedad o excepción</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-textSec hover:text-textPri p-1 rounded-md">
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              className="text-xs px-2.5 py-1.5 flex items-center gap-1 text-amber-300 hover:text-amber-200 border border-amber-500/30 bg-amber-950/20"
+              onClick={handleCheckNow}
+              disabled={isChecking}
+            >
+              {isChecking ? 'Verificando...' : '⚡ Controlar QR ahora'}
+            </Button>
+            <button onClick={onClose} className="text-textSec hover:text-textPri p-1 rounded-md">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

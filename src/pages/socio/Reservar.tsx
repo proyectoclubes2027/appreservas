@@ -11,6 +11,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useClubConfig } from '../../lib/useClubConfig';
 import { CloudRain } from 'lucide-react';
 import { CancelarTurnoModal } from '../../components/CancelarTurnoModal';
+import { resolverTurnosSinValidar } from '../../lib/cancelaciones';
 
 export default function Reservar() {
   const { socio } = useAuth();
@@ -50,6 +51,7 @@ export default function Reservar() {
     const initPage = async () => {
       setLoadingLocal(true);
       await Promise.all([fetchTurnos(), fetchSocios(), fetchCanchas()]);
+      resolverTurnosSinValidar(config).catch(console.warn);
       setLoadingLocal(false);
     };
     initPage();
@@ -238,13 +240,14 @@ export default function Reservar() {
     const nameStr = `${s.apellido}, ${s.nombre.charAt(0)}.`;
 
     // Obtenemos los turnos del jugador desde hoy en adelante que estén OCUPADOS
-    // Buscamos tanto si es titular (socio_dni) como si es acompañante (acompanante ilike)
-    const [reqTitular, reqAcom] = await Promise.all([
+    // Buscamos si es titular (socio_dni), acompañante (acompanante ilike) o si está en participantes_dnis
+    const [reqTitular, reqAcom, reqParts] = await Promise.all([
       supabase.from('turnos').select('id, fecha, hora_fin').eq('socio_dni', dniCheck).eq('estado', 'ocupado').gte('fecha', today),
-      supabase.from('turnos').select('id, fecha, hora_fin').ilike('acompanante', `%${nameStr}%`).eq('estado', 'ocupado').gte('fecha', today)
+      supabase.from('turnos').select('id, fecha, hora_fin').ilike('acompanante', `%${nameStr}%`).eq('estado', 'ocupado').gte('fecha', today),
+      supabase.from('turnos').select('id, fecha, hora_fin').contains('participantes_dnis', [dniCheck]).eq('estado', 'ocupado').gte('fecha', today),
     ]);
     
-    const data = [...(reqTitular.data || []), ...(reqAcom.data || [])].filter(t => t.id !== ignoreTurnoId);
+    const data = [...(reqTitular.data || []), ...(reqAcom.data || []), ...(reqParts.data || [])].filter(t => t.id !== ignoreTurnoId);
     
     if (!data || data.length === 0) return false;
 
@@ -361,19 +364,22 @@ export default function Reservar() {
       }
     }
 
-    // Check if the current user has an active penalty
+    // Check if ANY participant has an active penalty
     if (config.validacion_qr_activa) {
       const todayStr = format(new Date(), 'yyyy-MM-dd');
-      const { data: penaltyData } = await supabase
+      const nonGuestDnis = participants.filter(d => d !== '123987456');
+      const { data: penalties } = await supabase
         .from('penalizaciones')
         .select('*')
-        .eq('socio_dni', socio.dni)
+        .in('socio_dni', nonGuestDnis)
         .eq('activa', true)
-        .gte('fecha_fin', todayStr)
-        .maybeSingle();
+        .gte('fecha_fin', todayStr);
 
-      if (penaltyData) {
-        alert(`Tenés una sanción activa hasta el ${format(parseISO(penaltyData.fecha_fin), 'dd/MM/yyyy')} por no haber validado la presencia en tu turno anterior.`);
+      if (penalties && penalties.length > 0) {
+        const pen = penalties[0];
+        const s = sociosList.find(x => x.dni === pen.socio_dni) || (pen.socio_dni === socio.dni ? socio : null);
+        const nombreJugador = s ? `${s.apellido}, ${s.nombre}` : `DNI ${pen.socio_dni}`;
+        alert(`El jugador ${nombreJugador} tiene una sanción activa hasta el ${format(parseISO(pen.fecha_fin), 'dd/MM/yyyy')}. No puede reservar ni formar parte de un turno.`);
         setReservingLocal(false);
         return;
       }
@@ -428,6 +434,9 @@ export default function Reservar() {
       hora_fin: selectedShift.end,
       socio_dni: socio.dni,
       acompanante: acomnames,
+      participantes_dnis: participants,
+      validados_dnis: [],
+      sancion_qr_aplicada: false,
       estado: 'ocupado',
       validado: false,
       validado_at: null,
