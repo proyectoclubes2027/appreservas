@@ -13,7 +13,7 @@ import Agenda from './pages/socio/Agenda';
 import PagoExitoso from './pages/socio/PagoExitoso';
 import ReservasAdmin from './pages/admin/ReservasAdmin';
 import SociosAdmin from './pages/admin/SociosAdmin';
-import ReportesAdmin from './pages/admin/ReportesAdmin';
+import GestionAdmin from './pages/admin/GestionAdmin';
 import NoticiasAdmin from './pages/admin/NoticiasAdmin';
 
 const ProtectedRoute = ({ children, requiredRole }: { children: JSX.Element, requiredRole?: 'socio' | 'admin' }) => {
@@ -69,9 +69,10 @@ const AppRoutes = () => {
       <Route path="/admin/socios" element={
         <ProtectedRoute requiredRole="admin"><Layout><SociosAdmin /></Layout></ProtectedRoute>
       } />
-      <Route path="/admin/reportes" element={
-        <ProtectedRoute requiredRole="admin"><Layout><ReportesAdmin /></Layout></ProtectedRoute>
+      <Route path="/admin/gestion" element={
+        <ProtectedRoute requiredRole="admin"><Layout><GestionAdmin /></Layout></ProtectedRoute>
       } />
+      <Route path="/admin/reportes" element={<Navigate to="/admin/gestion" replace />} />
       <Route path="/admin/noticias" element={
         <ProtectedRoute requiredRole="admin"><Layout><NoticiasAdmin /></Layout></ProtectedRoute>
       } />
