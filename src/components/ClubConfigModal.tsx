@@ -23,7 +23,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
   const [mostrarAvisoQr, setMostrarAvisoQr] = useState(Boolean(config.mostrar_aviso_qr));
   const [diasAnticipacion, setDiasAnticipacion] = useState(config.dias_anticipacion || 2);
   const [tolerancia, setTolerancia] = useState(config.tolerancia_minutos || 20);
-  const [penalizacionDias, setPenalizacionDias] = useState(config.penalizacion_dias || 14);
+  const [penalizacionDias, setPenalizacionDias] = useState(config.penalizacion_dias || 7);
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -35,7 +35,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
       setMostrarAvisoQr(Boolean(config.mostrar_aviso_qr));
       setDiasAnticipacion(config.dias_anticipacion || 2);
       setTolerancia(config.tolerancia_minutos || 20);
-      setPenalizacionDias(config.penalizacion_dias || 14);
+      setPenalizacionDias(config.penalizacion_dias || 7);
     }
   }, [isOpen, config]);
 
@@ -239,7 +239,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
                 className="w-24 bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg px-3 py-2 text-textPri font-bold text-center focus:border-primary outline-none"
               />
               <span className="text-xs text-textSec">
-                días sin poder reservar ({penalizacionDias === 14 ? '2 semanas' : `${penalizacionDias} días`}).
+                días sin poder reservar ({penalizacionDias === 7 ? '1 semana' : `${penalizacionDias} días`}).
               </span>
             </div>
           </div>

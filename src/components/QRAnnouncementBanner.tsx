@@ -71,7 +71,7 @@ export const QRAnnouncementBanner: React.FC = () => {
       {/* Tarjeta de penalización estilizada */}
       <div className="bg-[#0a0a0a] border border-amber-500/30 rounded-xl p-2.5 mb-4 flex items-center gap-2 text-xs text-amber-300/95 font-medium">
         <ShieldAlert size={16} className="text-amber-400 shrink-0" />
-        <span>Si no se valida el turno, se aplicará una sanción de <strong>2 semanas</strong> sin poder reservar.</span>
+        <span>Si no se valida el turno, se aplicará una sanción de <strong>1 semana</strong> sin poder reservar.</span>
       </div>
 
       {/* Botones de acción limpios y equilibrados */}

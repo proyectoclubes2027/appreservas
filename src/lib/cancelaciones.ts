@@ -42,7 +42,7 @@ export function calcularMinutosFaltantes(fechaStr: string, horaInicioStr: string
  */
 export function evaluarCancelacion(turno: any, config: ClubConfig): InfoCancelacion {
   const minutos = calcularMinutosFaltantes(turno.fecha, turno.hora_inicio);
-  const diasSancion = config.penalizacion_dias || 14;
+  const diasSancion = config.penalizacion_dias || 7;
   const esClimaInestable = Boolean(config.clima_inestable);
 
   // 1. Clima Inestable activo
@@ -114,7 +114,7 @@ export async function ejecutarCancelacion(
 ): Promise<{ success: boolean; mensaje: string; categoria: CategoriaCancelacion; error?: string }> {
   try {
     const evaluacion = evaluarCancelacion(turno, config);
-    const diasSancion = config.penalizacion_dias || 14;
+    const diasSancion = config.penalizacion_dias || 7;
     const nowIso = new Date().toISOString();
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const fechaFinStr = format(addDays(new Date(), diasSancion), 'yyyy-MM-dd');
@@ -209,7 +209,7 @@ export async function resolverCancelacionesTardiasVencidas(config?: ClubConfig):
   try {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const nowHour = format(new Date(), 'HH:mm:ss');
-    const diasSancion = config?.penalizacion_dias || 14;
+    const diasSancion = config?.penalizacion_dias || 7;
     const esClimaInestable = Boolean(config?.clima_inestable);
 
     // Buscar turnos cancelados tardíamente pendientes
@@ -320,7 +320,7 @@ export async function resolverTurnosSinValidar(config?: ClubConfig): Promise<num
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const tolerancia = config?.tolerancia_minutos || 20;
-    const diasSancion = config?.penalizacion_dias || 14;
+    const diasSancion = config?.penalizacion_dias || 7;
 
     const { data: turnosSinValidar, error } = await supabase
       .from('turnos')

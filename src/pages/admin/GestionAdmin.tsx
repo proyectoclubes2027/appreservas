@@ -28,7 +28,7 @@ export default function GestionAdmin() {
   const [mostrarAvisoQr, setMostrarAvisoQr] = useState(false);
   const [diasAnticipacion, setDiasAnticipacion] = useState(2);
   const [tolerancia, setTolerancia] = useState(20);
-  const [penalizacionDias, setPenalizacionDias] = useState(14);
+  const [penalizacionDias, setPenalizacionDias] = useState(7);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
 
@@ -49,7 +49,7 @@ export default function GestionAdmin() {
       setMostrarAvisoQr(Boolean(config.mostrar_aviso_qr));
       setDiasAnticipacion(config.dias_anticipacion || 2);
       setTolerancia(config.tolerancia_minutos || 20);
-      setPenalizacionDias(config.penalizacion_dias || 14);
+      setPenalizacionDias(config.penalizacion_dias || 7);
     }
   }, [config]);
 
@@ -405,7 +405,7 @@ export default function GestionAdmin() {
               className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-textPri focus:outline-none focus:border-primary font-bold"
             />
             <span className="text-[10px] text-textSec">
-              Días en que los participantes quedan inhabilitados para volver a reservar.
+              Días en que los participantes quedan inhabilitados para volver a reservar ({penalizacionDias === 7 ? '1 semana' : `${penalizacionDias} días`}).
             </span>
           </div>
         </div>
