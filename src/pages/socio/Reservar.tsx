@@ -111,27 +111,38 @@ export default function Reservar() {
         return;
       }
 
-      // Fetch pagos usando select('*') para evitar problemas con nombres camelCase
-      const { data: pagosData, error: pagosError } = await supabase
-        .from('pago_cuotas')
-        .select('*');
-
-      if (pagosError) {
-        console.warn('Error fetching pago_cuotas (morosidad no disponible):', pagosError.message);
-      }
-
-      // Mapear el último mes pagado por socio_id
+      // Mapear el último mes pagado por socio_id en lotes para superar el límite de 1000 filas de Supabase PostgREST
       const ultimoPagoMap = new Map<string, string>();
-      if (pagosData) {
-        for (const pago of pagosData) {
-          const mesPagado: string = pago.mesPagado ?? pago.mespagado ?? '';
-          if (!mesPagado) continue;
-          const socioId: string = pago.socio_id;
-          const currentLast = ultimoPagoMap.get(socioId);
-          if (!currentLast || mesPagado > currentLast) {
-            ultimoPagoMap.set(socioId, mesPagado);
+      let from = 0;
+      const step = 1000;
+      while (true) {
+        const { data: batchData, error: batchError } = await supabase
+          .from('pago_cuotas')
+          .select('socio_id, mesPagado')
+          .order('mesPagado', { ascending: false })
+          .range(from, from + step - 1);
+
+        if (batchError) {
+          console.warn('Error fetching pago_cuotas (morosidad no disponible):', batchError.message);
+          break;
+        }
+
+        if (batchData) {
+          for (const pago of batchData) {
+            const mesPagado: string = pago.mesPagado ?? (pago as any).mespagado ?? '';
+            if (!mesPagado) continue;
+            const socioId: string = pago.socio_id;
+            const currentLast = ultimoPagoMap.get(socioId);
+            if (!currentLast || mesPagado > currentLast) {
+              ultimoPagoMap.set(socioId, mesPagado);
+            }
           }
         }
+
+        if (!batchData || batchData.length < step) {
+          break;
+        }
+        from += step;
       }
 
       // Fetch cuotas para tener en cuenta la deuda real cargada
@@ -389,7 +400,7 @@ export default function Reservar() {
 
     // Validate rules: Max 1 active for EVERY participant, and no participant can be moroso
     for (const d of participants) {
-      const s = sociosList.find(x => x.dni === d) || (d === socio.dni ? socio : null);
+      const s = (d === socio.dni ? socio : null) || sociosList.find(x => x.dni === d);
       if ((s?.mesesDeuda ?? 0) >= 4) {
         alert(`El jugador ${s.apellido}, ${s.nombre} no puede reservar turnos`);
         setReservingLocal(false);
