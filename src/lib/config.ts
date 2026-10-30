@@ -8,6 +8,7 @@ export interface ClubConfig {
   penalizacion_dias: number;
   mostrar_aviso_qr: boolean;
   clima_inestable: boolean;
+  sanciones_cancelacion_activa?: boolean;
 }
 
 export const DEFAULT_CONFIG: ClubConfig = {
@@ -18,4 +19,5 @@ export const DEFAULT_CONFIG: ClubConfig = {
   penalizacion_dias: 7,        // 1 semana
   mostrar_aviso_qr: false,     // Desactivado por defecto
   clima_inestable: false,      // Desactivado por defecto
+  sanciones_cancelacion_activa: true, // Sanciones por cancelación tardía activas por defecto
 };

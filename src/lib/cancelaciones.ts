@@ -44,18 +44,21 @@ export function evaluarCancelacion(turno: any, config: ClubConfig): InfoCancelac
   const minutos = calcularMinutosFaltantes(turno.fecha, turno.hora_inicio);
   const diasSancion = config.penalizacion_dias || 7;
   const esClimaInestable = Boolean(config.clima_inestable);
+  const sancionesCancelacionActiva = config.sanciones_cancelacion_activa !== false;
 
-  // 1. Clima Inestable activo
-  if (esClimaInestable) {
+  // 1. Clima Inestable activo o Sanciones por cancelación desactivadas por CD
+  if (esClimaInestable || !sancionesCancelacionActiva) {
     return {
       categoria: 'clima',
       minutosFaltantes: minutos,
-      esClimaInestable: true,
+      esClimaInestable: esClimaInestable,
       diasSancion,
-      titulo: 'Día con Clima Inestable',
-      badge: '🌧️ Clima Inestable',
+      titulo: esClimaInestable ? 'Día con Clima Inestable' : 'Sanciones por Cancelación en Pausa',
+      badge: esClimaInestable ? '🌧️ Clima Inestable' : '⏸️ Sin Sanción',
       color: 'sky',
-      descripcion: 'El club tiene activo el modo de clima inestable.',
+      descripcion: esClimaInestable 
+        ? 'El club tiene activo el modo de clima inestable.' 
+        : 'Las sanciones automáticas por cancelación tardía están desactivadas temporalmente.',
       impacto: 'Podés cancelar tu reserva sin ninguna penalidad ni sanción disciplinaria.',
     };
   }
@@ -211,8 +214,12 @@ export async function resolverCancelacionesTardiasVencidas(config?: ClubConfig):
     const nowHour = format(new Date(), 'HH:mm:ss');
     const diasSancion = config?.penalizacion_dias || 7;
     const esClimaInestable = Boolean(config?.clima_inestable);
+    const sancionesCancelacionActiva = config?.sanciones_cancelacion_activa !== false;
 
-    // Buscar turnos cancelados tardíamente pendientes
+    // Si las sanciones por cancelación tardía están desactivadas o clima inestable, no sancionar
+    if (!sancionesCancelacionActiva || esClimaInestable) {
+      return 0;
+    }
     const { data: turnosPendientes, error } = await supabase
       .from('turnos')
       .select('*, canchas(nombre)')
