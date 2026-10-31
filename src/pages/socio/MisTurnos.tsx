@@ -117,6 +117,36 @@ export default function MisTurnos() {
     if (!scannerTurno || !socio) return;
 
     try {
+      // 1. Intentar validar usando la función RPC segura (valida a nivel servidor sin conflictos de permisos RLS)
+      let rpcSuccess = false;
+      let rpcAllCompleted = false;
+
+      if (scannerTurno.id && isValidUuid(scannerTurno.id)) {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('validar_presencia_turno', {
+          p_turno_id: scannerTurno.id,
+          p_cancha_id: scannerTurno.cancha_id,
+        });
+
+        if (!rpcError && rpcData && rpcData.success) {
+          rpcSuccess = true;
+          rpcAllCompleted = Boolean(rpcData.all_completed);
+        } else if (rpcError) {
+          console.warn('RPC validar_presencia_turno falló, intentando fallback directo:', rpcError);
+        }
+      }
+
+      // 2. Si el RPC funcionó, mostrar mensaje y recargar turnos
+      if (rpcSuccess) {
+        if (rpcAllCompleted) {
+          alert('✓ ¡Turno 100% validado con éxito! Todos los jugadores registraron su presencia en la cancha.');
+        } else {
+          alert('✓ ¡Validaste tu presencia con éxito! Recordá que tus compañeros de turno también deben escanear el QR en la cancha.');
+        }
+        await fetchMisTurnos();
+        return;
+      }
+
+      // Fallback directo en caso de que el RPC no estuviera disponible
       const prevValidados: string[] = Array.isArray(scannerTurno.validados_dnis)
         ? [...scannerTurno.validados_dnis]
         : [];
