@@ -460,6 +460,29 @@ export default function Reservar() {
     if (error) {
       alert("Error al reservar: " + error.message);
     } else {
+      // Notificar por correo a los demás participantes del turno
+      const otrosParticipantes = participants.filter(d => d && d !== socio.dni && d !== '123987456');
+      if (otrosParticipantes.length > 0) {
+        otrosParticipantes.forEach((dniPart) => {
+          supabase.functions.invoke('send-notification', {
+            body: {
+              type: 'INSERT',
+              table: 'turnos',
+              record: {
+                socio_dni: dniPart,
+                cancha_id: modalCanchaId,
+                fecha: dateStr,
+                hora_inicio: selectedShift.start,
+                hora_fin: selectedShift.end,
+                acompanante: acomnames,
+                estado: 'ocupado',
+                participantes_dnis: participants
+              }
+            }
+          }).catch(err => console.warn('Error al notificar al participante:', dniPart, err));
+        });
+      }
+
       fetchTurnos();
       setIsModalOpen(false);
     }
