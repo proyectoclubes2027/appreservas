@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Zap, Users, AlertCircle, CheckCircle2, Clock, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 
-// URL del portal de secretaría (dashboard) — configurar en .env como VITE_DASHBOARD_URL
-const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || 'http://localhost:3000';
+// URL del portal de secretaría (dashboard)
+const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || 'https://adm-socios-caec-tenis.vercel.app';
 
 interface TurnoLuz {
   turnoId: string;
