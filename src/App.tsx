@@ -11,6 +11,7 @@ import Reservar from './pages/socio/Reservar';
 import MisTurnos from './pages/socio/MisTurnos';
 import Agenda from './pages/socio/Agenda';
 import PagoExitoso from './pages/socio/PagoExitoso';
+import MiCuenta from './pages/socio/MiCuenta';
 import ReservasAdmin from './pages/admin/ReservasAdmin';
 import SociosAdmin from './pages/admin/SociosAdmin';
 import GestionAdmin from './pages/admin/GestionAdmin';
@@ -57,6 +58,9 @@ const AppRoutes = () => {
       } />
       <Route path="/agenda" element={
         <ProtectedRoute requiredRole="socio"><Layout><Agenda /></Layout></ProtectedRoute>
+      } />
+      <Route path="/mi-cuenta" element={
+        <ProtectedRoute requiredRole="socio"><Layout><MiCuenta /></Layout></ProtectedRoute>
       } />
       <Route path="/pago-exitoso" element={
         <ProtectedRoute requiredRole="socio"><Layout><PagoExitoso /></Layout></ProtectedRoute>

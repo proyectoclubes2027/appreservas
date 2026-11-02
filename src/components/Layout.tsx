@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, User, LogOut, Users, Sliders, Bell, RotateCw } from 'lucide-react';
+import { Calendar, User, LogOut, Users, Sliders, Bell, RotateCw, Receipt } from 'lucide-react';
 import { NotificationBanner } from './NotificationBanner';
 import { NewsPopup } from './NewsPopup';
 import { ProfileCompletionModal } from './ProfileCompletionModal';
@@ -80,6 +80,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <>
               <NavItem icon={<Calendar />} label="Reservar" path="/reservar" current={location.pathname} onClick={() => navigate('/reservar')} />
               <NavItem icon={<User />} label="Mis turnos" path="/mis-turnos" current={location.pathname} onClick={() => navigate('/mis-turnos')} />
+              <NavItem icon={<Receipt />} label="Mi cuenta" path="/mi-cuenta" current={location.pathname} onClick={() => navigate('/mi-cuenta')} />
               <NavItem icon={<Users />} label="Agenda" path="/agenda" current={location.pathname} onClick={() => navigate('/agenda')} />
             </>
           )}
