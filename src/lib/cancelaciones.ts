@@ -301,8 +301,8 @@ export function estanTodosValidados(
 
 /**
  * Revisa turnos cuyo horario ya venció (o expiró la ventana de tolerancia)
- * y que no completaron la validación QR de todos los jugadores.
- * Aplica sanciones a TODOS los socios participantes registrados en el turno.
+ * y que no completaron la validación QR.
+ * Aplica sanciones únicamente a los socios que NO escanearon el QR.
  */
 export async function resolverTurnosSinValidar(config?: ClubConfig): Promise<number> {
   try {
@@ -312,17 +312,6 @@ export async function resolverTurnosSinValidar(config?: ClubConfig): Promise<num
     // Si la validación no está activa o el club está en modo clima inestable, no se sanciona
     if (!qrActivo || esClimaInestable) return 0;
 
-    // 1. Intentar resolver vía RPC en Supabase primero (más rápido y atómico)
-    try {
-      const { data: rpcRes, error: rpcErr } = await supabase.rpc('resolver_turnos_sin_validar_sql');
-      if (!rpcErr && rpcRes && typeof rpcRes.sanciones_aplicadas === 'number') {
-        return rpcRes.sanciones_aplicadas;
-      }
-    } catch (_) {
-      // Continuar con fallback client-side
-    }
-
-    // 2. Fallback client-side si el RPC no estuviera disponible
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -361,11 +350,11 @@ export async function resolverTurnosSinValidar(config?: ClubConfig): Promise<num
           ? t.participantes_dnis
           : (t.socio_dni ? [t.socio_dni] : []);
 
-        const sociosASancionar = participants.filter((d: string) => d && d !== '123987456');
-
-        // Si realmente estaban todos validados, marcar como validado sin sancionar
+        const sociosDelTurno = participants.filter((d: string) => d && d !== '123987456');
         const validadosList: string[] = t.validados_dnis || [];
-        const todosValidados = sociosASancionar.length > 0 && sociosASancionar.every(d => validadosList.includes(d));
+
+        // Si todos los socios del turno validaron su QR, marcar el turno como validado
+        const todosValidados = sociosDelTurno.length > 0 && sociosDelTurno.every(d => validadosList.includes(d));
 
         if (todosValidados) {
           await supabase
@@ -375,21 +364,25 @@ export async function resolverTurnosSinValidar(config?: ClubConfig): Promise<num
           continue;
         }
 
-        // Si falta alguno por validar, se sanciona a TODOS los participantes registrados
-        const canchaNombre = t.canchas?.nombre || `Cancha ${t.cancha_id}`;
-        const horaStr = (t.hora_inicio || '').slice(0, 5);
-        const fechaFinStr = format(addDays(new Date(), diasSancion), 'yyyy-MM-dd');
+        // Sanción INDIVIDUAL: solo se sanciona a los socios que NO validaron con QR
+        const sociosSinValidar = sociosDelTurno.filter(d => !validadosList.includes(d));
 
-        for (const socioDni of sociosASancionar) {
-          await supabase.from('penalizaciones').insert({
-            socio_dni: socioDni,
-            turno_id: t.id,
-            fecha_inicio: todayStr,
-            fecha_fin: fechaFinStr,
-            motivo: `No se completó la validación QR de los participantes (${canchaNombre}, ${t.fecha} ${horaStr}hs) - Sanción a todos los jugadores`,
-            activa: true,
-          });
-          sancionesAplicadas++;
+        if (sociosSinValidar.length > 0) {
+          const canchaNombre = t.canchas?.nombre || `Cancha ${t.cancha_id}`;
+          const horaStr = (t.hora_inicio || '').slice(0, 5);
+          const fechaFinStr = format(addDays(new Date(), diasSancion), 'yyyy-MM-dd');
+
+          for (const socioDni of sociosSinValidar) {
+            await supabase.from('penalizaciones').insert({
+              socio_dni: socioDni,
+              turno_id: t.id,
+              fecha_inicio: todayStr,
+              fecha_fin: fechaFinStr,
+              motivo: `No se validó la presencia con QR en el turno reservado (${canchaNombre}, ${t.fecha} ${horaStr}hs)`,
+              activa: true,
+            });
+            sancionesAplicadas++;
+          }
         }
 
         await supabase

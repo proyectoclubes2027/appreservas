@@ -362,7 +362,7 @@ export default function MisTurnos() {
                     </span>
                     {config.validacion_qr_activa && !config.clima_inestable && (
                       <span className="text-[10px] text-amber-400/90 font-medium hidden sm:inline">
-                        * Todos los jugadores deben validar para evitar sanciones
+                        * Cada jugador debe escanear para no recibir sanción individual
                       </span>
                     )}
                   </div>
@@ -421,7 +421,7 @@ export default function MisTurnos() {
                     <p className="text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 p-2 rounded-lg mt-1 flex items-center gap-1.5">
                       <ShieldAlert size={14} className="text-amber-400 shrink-0" />
                       <span>
-                        Recordá escanear el código QR en la entrada de la cancha. Si algún jugador no valida, la sanción aplicará a todos los participantes.
+                        Recordá escanear el código QR en la entrada de la cancha. La sanción se aplicará únicamente al socio que no valide su presencia.
                       </span>
                     </p>
                   )}
