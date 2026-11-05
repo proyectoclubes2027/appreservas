@@ -192,44 +192,46 @@ export default function MiCuenta() {
             )}
           </Seccion>
 
-          {/* Bloque: Invitados Extra */}
-          <Seccion
-            title="Invitados Extra"
-            icon={<Users size={16} className="text-blue-400" />}
-            defaultOpen={data.invitados.length > 0}
-          >
-            {data.invitados.length === 0 ? (
-              <p className="text-textSec text-sm py-2">No tenés cargos por invitados este año.</p>
-            ) : (
-              <>
-                <div className="flex gap-3 mb-3">
-                  <div className="flex-1 bg-background rounded-lg p-3 text-center">
-                    <p className="text-xs text-textSec mb-0.5">Total pagado</p>
-                    <p className="text-emerald-400 font-bold text-sm">{formatMoney(data.resumen.invitadosPagado)}</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {data.invitados.map((inv) => (
-                    <div
-                      key={inv.id}
-                      className="flex items-center justify-between rounded-lg px-3 py-2.5 border border-emerald-800/40 bg-emerald-900/10 text-sm"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-textPri font-medium truncate">{inv.concepto}</p>
-                        <p className="text-textSec text-xs">
-                          {formatFecha(inv.fechaRegistro)} · {inv.metodoPago}
-                        </p>
-                      </div>
-                      <div className="ml-3 text-right shrink-0">
-                        <p className="font-bold text-textPri">{formatMoney(inv.monto)}</p>
-                        <CheckCircle2 size={14} className="text-emerald-400 ml-auto mt-0.5" />
-                      </div>
+          {/* Bloque: Invitados Extra (Solo visible para socios estándar) */}
+          {socio?.rol !== 'profesor' && (
+            <Seccion
+              title="Invitados Extra"
+              icon={<Users size={16} className="text-blue-400" />}
+              defaultOpen={data.invitados.length > 0}
+            >
+              {data.invitados.length === 0 ? (
+                <p className="text-textSec text-sm py-2">No tenés cargos por invitados este año.</p>
+              ) : (
+                <>
+                  <div className="flex gap-3 mb-3">
+                    <div className="flex-1 bg-background rounded-lg p-3 text-center">
+                      <p className="text-xs text-textSec mb-0.5">Total pagado</p>
+                      <p className="text-emerald-400 font-bold text-sm">{formatMoney(data.resumen.invitadosPagado)}</p>
                     </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </Seccion>
+                  </div>
+                  <div className="space-y-2">
+                    {data.invitados.map((inv) => (
+                      <div
+                        key={inv.id}
+                        className="flex items-center justify-between rounded-lg px-3 py-2.5 border border-emerald-800/40 bg-emerald-900/10 text-sm"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-textPri font-medium truncate">{inv.concepto}</p>
+                          <p className="text-textSec text-xs">
+                            {formatFecha(inv.fechaRegistro)} · {inv.metodoPago}
+                          </p>
+                        </div>
+                        <div className="ml-3 text-right shrink-0">
+                          <p className="font-bold text-textPri">{formatMoney(inv.monto)}</p>
+                          <CheckCircle2 size={14} className="text-emerald-400 ml-auto mt-0.5" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </Seccion>
+          )}
 
           {/* Nota al pie */}
           <p className="text-center text-textSec text-xs mt-2 pb-2">
