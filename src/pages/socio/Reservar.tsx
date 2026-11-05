@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { SHIFTS } from '../../lib/constants';
@@ -94,12 +94,13 @@ export default function Reservar() {
 
   const fetchSocios = async () => {
     try {
-      // Fetch socios activos (excluyendo admins)
+      // Fetch socios activos (excluyendo admins y profesores)
       const { data: sociosData, error: sociosError } = await supabase
         .from('socios')
         .select('id, dni, nombre, apellido, categoria, rol, fecha_alta')
         .eq('estado', 'activo')
         .neq('rol', 'admin')
+        .neq('rol', 'profesor')
         .neq('dni', 'admin')
         .order('apellido', { ascending: true });
 
@@ -713,7 +714,7 @@ export default function Reservar() {
               <label className="text-xs font-semibold text-textSec uppercase">Jugador/es Rivales (opcional)</label>
               
               <SearchableSelect
-                 options={sociosList.filter(s => s.dni !== socio?.dni && s.rol !== 'admin' && s.dni !== 'admin').map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}`, isMoroso: s.isMoroso, mesesDeuda: s.mesesDeuda }))}
+                 options={sociosList.filter(s => s.dni !== socio?.dni && s.rol !== 'admin' && s.rol !== 'profesor' && s.dni !== 'admin').map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}`, isMoroso: s.isMoroso, mesesDeuda: s.mesesDeuda }))}
                  value={comp1}
                  onChange={setComp1}
                  placeholder="Seleccionar Jugador 2..."
@@ -722,13 +723,13 @@ export default function Reservar() {
               {tipoJuego === 'dobles' && (
                 <>
                   <SearchableSelect
-                     options={sociosList.filter(s => s.dni !== socio?.dni && s.rol !== 'admin' && s.dni !== 'admin').map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}`, isMoroso: s.isMoroso, mesesDeuda: s.mesesDeuda }))}
+                     options={sociosList.filter(s => s.dni !== socio?.dni && s.rol !== 'admin' && s.rol !== 'profesor' && s.dni !== 'admin').map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}`, isMoroso: s.isMoroso, mesesDeuda: s.mesesDeuda }))}
                      value={comp2}
                      onChange={setComp2}
                      placeholder="Seleccionar Jugador 3..."
                   />
                   <SearchableSelect
-                     options={sociosList.filter(s => s.dni !== socio?.dni && s.rol !== 'admin' && s.dni !== 'admin').map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}`, isMoroso: s.isMoroso, mesesDeuda: s.mesesDeuda }))}
+                     options={sociosList.filter(s => s.dni !== socio?.dni && s.rol !== 'admin' && s.rol !== 'profesor' && s.dni !== 'admin').map(s => ({ value: s.dni, label: `${s.apellido}, ${s.nombre}`, isMoroso: s.isMoroso, mesesDeuda: s.mesesDeuda }))}
                      value={comp3}
                      onChange={setComp3}
                      placeholder="Seleccionar Jugador 4..."
