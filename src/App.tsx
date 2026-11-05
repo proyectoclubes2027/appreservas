@@ -17,7 +17,7 @@ import SociosAdmin from './pages/admin/SociosAdmin';
 import GestionAdmin from './pages/admin/GestionAdmin';
 import NoticiasAdmin from './pages/admin/NoticiasAdmin';
 
-const ProtectedRoute = ({ children, requiredRole }: { children: JSX.Element, requiredRole?: 'socio' | 'admin' }) => {
+const ProtectedRoute = ({ children, allowedRoles }: { children: JSX.Element, allowedRoles?: Array<'socio' | 'admin' | 'profesor'> }) => {
   const { user, socio, loading } = useAuth();
 
   if (loading) return <div className="p-10 text-center">Cargando...</div>;
@@ -26,8 +26,8 @@ const ProtectedRoute = ({ children, requiredRole }: { children: JSX.Element, req
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && socio.rol !== requiredRole) {
-    return <Navigate to={socio.rol === 'admin' ? '/admin/reservas' : '/reservar'} replace />;
+  if (allowedRoles && !allowedRoles.includes(socio.rol)) {
+    return <Navigate to={socio.rol === 'admin' || socio.rol === 'profesor' ? '/admin/reservas' : '/reservar'} replace />;
   }
 
   return children;
@@ -46,39 +46,39 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={socio ? (socio.rol === 'admin' ? '/admin/reservas' : '/reservar') : '/login'} replace />} />
+      <Route path="/" element={<Navigate to={socio ? (socio.rol === 'admin' || socio.rol === 'profesor' ? '/admin/reservas' : '/reservar') : '/login'} replace />} />
       <Route path="/login" element={<Login />} />
       
       {/* Socio Routes */}
       <Route path="/reservar" element={
-        <ProtectedRoute requiredRole="socio"><Layout><Reservar /></Layout></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['socio']}><Layout><Reservar /></Layout></ProtectedRoute>
       } />
       <Route path="/mis-turnos" element={
-        <ProtectedRoute requiredRole="socio"><Layout><MisTurnos /></Layout></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['socio']}><Layout><MisTurnos /></Layout></ProtectedRoute>
       } />
       <Route path="/agenda" element={
-        <ProtectedRoute requiredRole="socio"><Layout><Agenda /></Layout></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['socio']}><Layout><Agenda /></Layout></ProtectedRoute>
       } />
       <Route path="/mi-cuenta" element={
-        <ProtectedRoute requiredRole="socio"><Layout><MiCuenta /></Layout></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['socio', 'profesor']}><Layout><MiCuenta /></Layout></ProtectedRoute>
       } />
       <Route path="/pago-exitoso" element={
-        <ProtectedRoute requiredRole="socio"><Layout><PagoExitoso /></Layout></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['socio']}><Layout><PagoExitoso /></Layout></ProtectedRoute>
       } />
 
-      {/* Admin Routes */}
+      {/* Admin / Profesor Routes */}
       <Route path="/admin/reservas" element={
-        <ProtectedRoute requiredRole="admin"><Layout><ReservasAdmin /></Layout></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin', 'profesor']}><Layout><ReservasAdmin /></Layout></ProtectedRoute>
       } />
       <Route path="/admin/socios" element={
-        <ProtectedRoute requiredRole="admin"><Layout><SociosAdmin /></Layout></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin']}><Layout><SociosAdmin /></Layout></ProtectedRoute>
       } />
       <Route path="/admin/gestion" element={
-        <ProtectedRoute requiredRole="admin"><Layout><GestionAdmin /></Layout></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin']}><Layout><GestionAdmin /></Layout></ProtectedRoute>
       } />
       <Route path="/admin/reportes" element={<Navigate to="/admin/gestion" replace />} />
       <Route path="/admin/noticias" element={
-        <ProtectedRoute requiredRole="admin"><Layout><NoticiasAdmin /></Layout></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin', 'profesor']}><Layout><NoticiasAdmin /></Layout></ProtectedRoute>
       } />
     </Routes>
   );

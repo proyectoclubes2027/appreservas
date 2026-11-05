@@ -27,6 +27,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const isSocio = socio?.rol === 'socio';
   const isAdmin = socio?.rol === 'admin';
+  const isProfesor = socio?.rol === 'profesor';
   
   // Condición para bloquear si falta confirmar los datos o si están vacíos (solo aplica a socios)
   const isProfileIncomplete = isSocio && !socio.datos_confirmados;
@@ -82,6 +83,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <NavItem icon={<User />} label="Mis turnos" path="/mis-turnos" current={location.pathname} onClick={() => navigate('/mis-turnos')} />
               <NavItem icon={<Receipt />} label="Mi cuenta" path="/mi-cuenta" current={location.pathname} onClick={() => navigate('/mi-cuenta')} />
               <NavItem icon={<Users />} label="Agenda" path="/agenda" current={location.pathname} onClick={() => navigate('/agenda')} />
+            </>
+          )}
+          {isProfesor && (
+            <>
+              <NavItem icon={<Calendar />} label="Reservas" path="/admin/reservas" current={location.pathname} onClick={() => navigate('/admin/reservas')} />
+              <NavItem icon={<Receipt />} label="Mi Cuenta / Luz" path="/mi-cuenta" current={location.pathname} onClick={() => navigate('/mi-cuenta')} />
+              <NavItem icon={<Bell />} label="Noticias" path="/admin/noticias" current={location.pathname} onClick={() => navigate('/admin/noticias')} />
             </>
           )}
           {isAdmin && (

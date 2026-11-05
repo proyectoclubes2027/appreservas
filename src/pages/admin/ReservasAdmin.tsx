@@ -29,7 +29,7 @@ export default function ReservasAdmin() {
   const [selectedShift, setSelectedShift] = useState<any>(null);
   const [modalCanchaId, setModalCanchaId] = useState<number>(1);
   const [motivoBloqueo, setMotivoBloqueo] = useState('');
-  const [tipoBloqueo, setTipoBloqueo] = useState<'mantenimiento' | 'clases'>('mantenimiento');
+  const [tipoBloqueo, setTipoBloqueo] = useState<'mantenimiento' | 'clases' | 'torneo'>('clases');
 
   // States for Mass Blocking
   const [isMassBlockModalOpen, setIsMassBlockModalOpen] = useState(false);
@@ -263,7 +263,16 @@ export default function ReservasAdmin() {
 
   const confirmBlock = async () => {
     let inserts = [];
-    const weeks = tipoBloqueo === 'clases' ? 24 : 1; // 24 semanas para permanente
+    const weeks = tipoBloqueo === 'clases' ? 24 : 1; // 24 semanas para permanente de clases
+
+    const defaultMotivo = 
+      tipoBloqueo === 'clases' ? 'Clases - Profe' :
+      tipoBloqueo === 'torneo' ? 'Torneo' : 'Mantenimiento';
+
+    // Si es clases, se asigna al DNI del profesor (socio.dni si es profesor o 33220331 por defecto si es admin)
+    const assignedDni = tipoBloqueo === 'clases' 
+      ? (socio?.rol === 'profesor' ? socio.dni : (socio?.dni || '33220331'))
+      : socio?.dni;
 
     for (let i = 0; i < weeks; i++) {
         const d = addDays(selectedDate, i * 7);
@@ -274,8 +283,8 @@ export default function ReservasAdmin() {
             hora_inicio: selectedShift.start,
             hora_fin: selectedShift.end,
             estado: 'bloqueado',
-            motivo_bloqueo: motivoBloqueo || (tipoBloqueo === 'clases' ? 'Clases' : 'Mantenimiento'),
-            socio_dni: socio?.dni
+            motivo_bloqueo: motivoBloqueo.trim() || defaultMotivo,
+            socio_dni: assignedDni
         });
     }
 
@@ -286,14 +295,31 @@ export default function ReservasAdmin() {
 
     setIsModalOpen(false);
     setMotivoBloqueo('');
-    setTipoBloqueo('mantenimiento');
+    setTipoBloqueo('clases');
   };
+
+  const isProfesor = socio?.rol === 'profesor';
+  const isAdmin = socio?.rol === 'admin';
 
   const unlockOrCancel = async (turno: any) => {
     const isOcupado = turno.estado === 'ocupado';
+
+    // Regla de permisos para profesor: solo puede desbloquear turnos de Clases o Torneo asignados
+    if (isProfesor) {
+      if (isOcupado) {
+        alert("No tienes permisos para cancelar reservas de socios.");
+        return;
+      }
+      const motivoLower = (turno.motivo_bloqueo || '').toLowerCase();
+      if (motivoLower.includes('mantenimiento')) {
+        alert("Los turnos por mantenimiento solo pueden ser modificados por la administración.");
+        return;
+      }
+    }
+
     const message = isOcupado 
       ? '¿Seguro que deseas CANCELAR la reserva del socio? Se le enviará una notificación automática.' 
-      : '¿Seguro que deseas eliminar este bloqueo?';
+      : (isProfesor ? '¿Deseas liberar este turno para que quede disponible para los socios?' : '¿Seguro que deseas eliminar este bloqueo?');
       
     if (!confirm(message)) return;
     
@@ -428,45 +454,51 @@ export default function ReservasAdmin() {
         {/* Fila Título + Acciones Principales */}
         <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-3">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-primary block leading-tight">Panel Administrador</span>
-            <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wide text-textPri m-0 leading-tight">Gestión de Reservas</h2>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-primary block leading-tight">
+              {isProfesor ? 'Panel Profesor' : 'Panel Administrador'}
+            </span>
+            <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wide text-textPri m-0 leading-tight">
+              {isProfesor ? 'Canchas y Clases' : 'Gestión de Reservas'}
+            </h2>
           </div>
           
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            {/* Botón Clima Inestable (Opción B) */}
-            <button
-              onClick={handleToggleClima}
-              className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 border ${
-                config.clima_inestable
-                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 animate-pulse'
-                  : 'bg-[#0d0d0d] hover:bg-[#181818] text-textSec hover:text-textPri border-border'
-              }`}
-              title="Activar / Desactivar modo de clima inestable por lluvia"
-            >
-              <CloudRain size={15} className={config.clima_inestable ? 'text-sky-400' : 'text-textSec'} />
-              <span>{config.clima_inestable ? '🌧️ Clima Inestable: ACTIVO' : '⛅ Clima Normal'}</span>
-            </button>
+          {isAdmin && (
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              {/* Botón Clima Inestable (Opción B) */}
+              <button
+                onClick={handleToggleClima}
+                className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 border ${
+                  config.clima_inestable
+                    ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 animate-pulse'
+                    : 'bg-[#0d0d0d] hover:bg-[#181818] text-textSec hover:text-textPri border-border'
+                }`}
+                title="Activar / Desactivar modo de clima inestable por lluvia"
+              >
+                <CloudRain size={15} className={config.clima_inestable ? 'text-sky-400' : 'text-textSec'} />
+                <span>{config.clima_inestable ? '🌧️ Clima Inestable: ACTIVO' : '⛅ Clima Normal'}</span>
+              </button>
 
-            <button
-              onClick={() => setIsPenalizacionesModalOpen(true)}
-              className="px-3 py-2 rounded-xl text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
-              title="Ver y levantar sanciones"
-            >
-              <ShieldAlert size={15} />
-              <span>Sanciones</span>
-            </button>
-            <button
-              onClick={() => {
-                refreshConfig();
-                setIsConfigModalOpen(true);
-              }}
-              className="px-3 py-2 rounded-xl text-xs font-bold text-[#0d0d0d] bg-primary hover:bg-primary/90 flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
-              title="Configurar Reglas y QR"
-            >
-              <Settings size={15} />
-              <span>Reglas</span>
-            </button>
-          </div>
+              <button
+                onClick={() => setIsPenalizacionesModalOpen(true)}
+                className="px-3 py-2 rounded-xl text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                title="Ver y levantar sanciones"
+              >
+                <ShieldAlert size={15} />
+                <span>Sanciones</span>
+              </button>
+              <button
+                onClick={() => {
+                  refreshConfig();
+                  setIsConfigModalOpen(true);
+                }}
+                className="px-3 py-2 rounded-xl text-xs font-bold text-[#0d0d0d] bg-primary hover:bg-primary/90 flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                title="Configurar Reglas y QR"
+              >
+                <Settings size={15} />
+                <span>Reglas</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Banner Informativo si Clima Inestable está activo */}
@@ -478,39 +510,43 @@ export default function ReservasAdmin() {
                 <strong>🌧️ Modo Clima Inestable Activo:</strong> Se suspenden las exigencias obligatorias de QR y no se sancionan ausencias ni cancelaciones hoy.
               </span>
             </div>
-            <button
-              onClick={handleToggleClima}
-              className="underline text-sky-300 hover:text-white font-bold ml-2 shrink-0 text-[11px]"
-            >
-              Desactivar
-            </button>
+            {isAdmin && (
+              <button
+                onClick={handleToggleClima}
+                className="underline text-sky-300 hover:text-white font-bold ml-2 shrink-0 text-[11px]"
+              >
+                Desactivar
+              </button>
+            )}
           </div>
         )}
 
-        {/* Fila Acciones Secundarias / Desbloqueos */}
-        <div className="grid grid-cols-3 gap-2">
-          <Button
-            variant="secondary"
-            onClick={handleUnblockSaturdays}
-            className="text-[11px] py-2 px-1 font-semibold flex items-center justify-center text-center truncate"
-          >
-            Desbloq. Sáb.
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleUnblockSundays}
-            className="text-[11px] py-2 px-1 font-semibold flex items-center justify-center text-center truncate"
-          >
-            Desbloq. Dom.
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => setIsMassBlockModalOpen(true)}
-            className="text-[11px] py-2 px-1 font-semibold flex items-center justify-center text-center truncate"
-          >
-            ⛈️ Bloquear Día
-          </Button>
-        </div>
+        {/* Fila Acciones Secundarias / Desbloqueos (Solo Admin) */}
+        {isAdmin && (
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              variant="secondary"
+              onClick={handleUnblockSaturdays}
+              className="text-[11px] py-2 px-1 font-semibold flex items-center justify-center text-center truncate"
+            >
+              Desbloq. Sáb.
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleUnblockSundays}
+              className="text-[11px] py-2 px-1 font-semibold flex items-center justify-center text-center truncate"
+            >
+              Desbloq. Dom.
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => setIsMassBlockModalOpen(true)}
+              className="text-[11px] py-2 px-1 font-semibold flex items-center justify-center text-center truncate"
+            >
+              ⛈️ Bloquear Día
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Date Selector */}
@@ -586,26 +622,78 @@ export default function ReservasAdmin() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-[#0d0d0d]/80 z-50 flex items-center justify-center p-4">
           <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm">
-            <h3 className="text-lg font-bold mb-4">Bloquear Cancha {modalCanchaId}</h3>
-            <p className="text-sm mb-4 text-textSec">{selectedShift?.start} - {selectedShift?.end}</p>
+            <h3 className="text-lg font-bold mb-1">Bloquear Cancha {modalCanchaId}</h3>
+            <p className="text-sm mb-4 text-textSec border-b border-border/50 pb-2">
+              {selectedShift?.start} - {selectedShift?.end} hs · {format(selectedDate, 'dd/MM/yyyy')}
+            </p>
             
-            <div className="flex gap-4 mb-4">
-              <label className="flex items-center gap-2 cursor-pointer text-sm">
-                <input type="radio" value="mantenimiento" checked={tipoBloqueo === 'mantenimiento'} onChange={() => { setTipoBloqueo('mantenimiento'); setMotivoBloqueo(''); }} className="text-primary accent-primary" />
-                Mantenimiento Puntual
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm">
-                <input type="radio" value="clases" checked={tipoBloqueo === 'clases'} onChange={() => { setTipoBloqueo('clases'); setMotivoBloqueo('Clases - Profe'); }} className="text-primary accent-primary" />
-                Clases (Permanente)
-              </label>
+            <p className="text-xs font-bold text-textSec uppercase tracking-wider mb-2">
+              Tipo de Bloqueo:
+            </p>
+
+            {/* Botones Grandes Táctiles para Móvil */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoBloqueo('clases');
+                  setMotivoBloqueo('Clases - Profe');
+                }}
+                className={`py-3 px-2 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all border ${
+                  tipoBloqueo === 'clases'
+                    ? 'bg-amber-500 text-black border-amber-400 shadow-md font-extrabold scale-[1.02]'
+                    : 'bg-[#141416] border-[#2A2A30] text-[#AAA] hover:text-white'
+                }`}
+              >
+                <span className="text-base">🎾</span>
+                <span>Clases</span>
+                <span className="text-[9px] opacity-75 font-normal">(Permanente)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoBloqueo('torneo');
+                  setMotivoBloqueo('Torneo');
+                }}
+                className={`py-3 px-2 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all border ${
+                  tipoBloqueo === 'torneo'
+                    ? 'bg-purple-600 text-white border-purple-400 shadow-md font-extrabold scale-[1.02]'
+                    : 'bg-[#141416] border-[#2A2A30] text-[#AAA] hover:text-white'
+                }`}
+              >
+                <span className="text-base">🏆</span>
+                <span>Torneo</span>
+                <span className="text-[9px] opacity-75 font-normal">(Puntual)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoBloqueo('mantenimiento');
+                  setMotivoBloqueo('Mantenimiento');
+                }}
+                className={`py-3 px-2 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all border ${
+                  tipoBloqueo === 'mantenimiento'
+                    ? 'bg-orange-600 text-white border-orange-400 shadow-md font-extrabold scale-[1.02]'
+                    : 'bg-[#141416] border-[#2A2A30] text-[#AAA] hover:text-white'
+                }`}
+              >
+                <span className="text-base">🛠️</span>
+                <span>Mantenim.</span>
+                <span className="text-[9px] opacity-75 font-normal">(Puntual)</span>
+              </button>
             </div>
             
-            <textarea
-              className="w-full bg-[#0d0d0d] border border-border rounded-md p-3 text-textPri outline-none focus:border-primary mb-6 resize-none"
-              placeholder={tipoBloqueo === 'clases' ? "Clases" : "Motivo del bloqueo (ej: Mantenimiento)"}
+            <label className="text-[11px] font-semibold text-textSec uppercase mb-1 block">
+              Detalle / Motivo:
+            </label>
+            <input
+              type="text"
+              className="w-full bg-[#0d0d0d] border border-border rounded-md p-3 text-textPri outline-none focus:border-primary mb-6 text-sm"
+              placeholder="Detalle del motivo..."
               value={motivoBloqueo}
               onChange={e => setMotivoBloqueo(e.target.value)}
-              rows={2}
             />
 
             <div className="flex gap-3">
@@ -725,9 +813,12 @@ export default function ReservasAdmin() {
             
             <div className="flex gap-3">
               <Button variant="secondary" fullWidth onClick={() => setInfoTurno(null)}>Cerrar</Button>
-              <Button variant="danger" fullWidth onClick={() => unlockOrCancel(infoTurno)}>
-                {infoTurno.estado === 'bloqueado' ? 'Desbloquear' : 'Cancelar Turno'}
-              </Button>
+              {/* Para profesor: si el turno es ocupado por socios o mantenimiento, no puede cancelarlo */}
+              {(!isProfesor || (infoTurno.estado === 'bloqueado' && !((infoTurno.motivo_bloqueo || '').toLowerCase().includes('mantenimiento')))) && (
+                <Button variant="danger" fullWidth onClick={() => unlockOrCancel(infoTurno)}>
+                  {infoTurno.estado === 'bloqueado' ? (isProfesor ? 'Liberar Turno' : 'Desbloquear') : 'Cancelar Turno'}
+                </Button>
+              )}
             </div>
           </div>
         </div>

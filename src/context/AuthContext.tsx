@@ -7,7 +7,7 @@ type Socio = {
   dni: string;
   nombre: string;
   apellido: string;
-  rol: 'socio' | 'admin';
+  rol: 'socio' | 'admin' | 'profesor';
   activo: boolean;
   telefono?: string;
   email?: string | null;
@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       let isMoroso = false;
       let mesesDeuda = 0;
       
-      if (socioData.categoria !== 'vitalicio' && socioData.rol !== 'admin') {
+      if (socioData.categoria !== 'vitalicio' && socioData.rol !== 'admin' && socioData.rol !== 'profesor') {
         const { data: pagos } = await supabase
           .from('pago_cuotas')
           .select('*')
