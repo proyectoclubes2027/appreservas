@@ -99,16 +99,22 @@ export default function MisTurnos() {
     if (turno.fecha !== todayStr) return false;
     if (!turno.hora_inicio) return false;
 
-    // Calcular minutos desde medianoche para el inicio y la hora actual
+    // Calcular minutos desde medianoche para el inicio, fin y hora actual
     const [startH, startM] = turno.hora_inicio.slice(0, 5).split(':').map(Number);
     const startMinutes = startH * 60 + startM;
+
+    let endMinutes = startMinutes + 60; // default 1 hora si no tiene hora_fin
+    if (turno.hora_fin) {
+      const [endH, endM] = turno.hora_fin.slice(0, 5).split(':').map(Number);
+      endMinutes = endH * 60 + endM;
+    }
 
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
     const tolerancia = config.tolerancia_minutos || 20;
     const windowStart = startMinutes - tolerancia;
-    const windowEnd = startMinutes + tolerancia;
+    const windowEnd = endMinutes + tolerancia;
 
     return currentMinutes >= windowStart && currentMinutes <= windowEnd;
   };

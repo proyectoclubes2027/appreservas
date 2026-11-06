@@ -341,8 +341,13 @@ export async function resolverTurnosSinValidar(config?: ClubConfig): Promise<num
       if (!windowExpired && t.fecha === todayStr && t.hora_inicio) {
         const [h, m] = t.hora_inicio.slice(0, 5).split(':').map(Number);
         const startMinutes = h * 60 + m;
-        // La ventana de escaneo termina en startMinutes + tolerancia
-        windowExpired = currentMinutes > (startMinutes + tolerancia);
+        let endMinutes = startMinutes + 60;
+        if (t.hora_fin) {
+          const [eh, em] = t.hora_fin.slice(0, 5).split(':').map(Number);
+          endMinutes = eh * 60 + em;
+        }
+        // La ventana de escaneo termina en endMinutes + tolerancia (20 min después de terminado el turno)
+        windowExpired = currentMinutes > (endMinutes + tolerancia);
       }
 
       if (windowExpired) {
