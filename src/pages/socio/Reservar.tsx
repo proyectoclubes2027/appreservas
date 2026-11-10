@@ -9,10 +9,11 @@ import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { loginOneSignal } from '../../lib/onesignal';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useClubConfig } from '../../lib/useClubConfig';
-import { CloudRain, ShieldAlert } from 'lucide-react';
+import { CloudRain, ShieldAlert, UserPlus } from 'lucide-react';
 import { CancelarTurnoModal } from '../../components/CancelarTurnoModal';
 import { resolverTurnosSinValidar } from '../../lib/cancelaciones';
 import { useSocioSancion } from '../../lib/useSocioSancion';
+import { InvitadoDato, getInvitadosFrecuentes, guardarInvitadoFrecuente } from '../../lib/invitadosStorage';
 
 export default function Reservar() {
   const { socio } = useAuth();
@@ -35,6 +36,8 @@ export default function Reservar() {
   const [comp1, setComp1] = useState<string>(''); // DNI
   const [comp2, setComp2] = useState<string>('');
   const [comp3, setComp3] = useState<string>('');
+  const [invitadosDataModal, setInvitadosDataModal] = useState<InvitadoDato[]>([]);
+  const [frecuentesList, setFrecuentesList] = useState<InvitadoDato[]>([]);
   const [reservingLocal, setReservingLocal] = useState(false);
   
   // State for shift details modal
@@ -284,6 +287,8 @@ export default function Reservar() {
     setComp1('');
     setComp2('');
     setComp3('');
+    setInvitadosDataModal([]);
+    setFrecuentesList(getInvitadosFrecuentes());
     setEditTurnoId(null);
     setIsModalOpen(true);
   };
@@ -296,6 +301,8 @@ export default function Reservar() {
     setComp1('');
     setComp2('');
     setComp3('');
+    setInvitadosDataModal(Array.isArray(infoTurno.invitados_datos) ? infoTurno.invitados_datos : []);
+    setFrecuentesList(getInvitadosFrecuentes());
     setEditTurnoId(infoTurno.id);
     setInfoTurno(null);
     setIsModalOpen(true);
@@ -442,6 +449,14 @@ export default function Reservar() {
 
     const nuevoTipo = prevTurno?.cancelacion_tipo === 'tardia_pendiente' ? 'tardia_salvada' : null;
 
+    // Procesar datos de invitados si se ingresaron
+    const cleanInvitados = invitadosDataModal
+      .map(inv => ({ nombre: (inv.nombre || '').trim(), dni: (inv.dni || '').trim() }))
+      .filter(inv => inv.nombre || inv.dni);
+
+    // Guardar en favoritos frecuentes
+    cleanInvitados.forEach(guardarInvitadoFrecuente);
+
     const { error } = await supabase.from('turnos').upsert({
       cancha_id: modalCanchaId,
       fecha: dateStr,
@@ -450,6 +465,7 @@ export default function Reservar() {
       socio_dni: socio.dni,
       acompanante: acomnames,
       participantes_dnis: participants,
+      invitados_datos: cleanInvitados,
       validados_dnis: [],
       sancion_qr_aplicada: false,
       estado: 'ocupado',
@@ -735,6 +751,88 @@ export default function Reservar() {
                      placeholder="Seleccionar Jugador 4..."
                   />
                 </>
+              )}
+
+              {/* Si hay Invitado Especial seleccionado en cualquiera de los campos, mostrar formulario opcional de datos */}
+              {[comp1, comp2, comp3].filter(c => c === '123987456').length > 0 && (
+                <div className="mt-2 pt-3 border-t border-[#262626] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-primary uppercase flex items-center gap-1">
+                      <UserPlus size={13} /> Datos del Invitado (Opcional)
+                    </span>
+                    <span className="text-[10px] text-zinc-500">
+                      Podés cargarlo ahora o luego en Mis Turnos
+                    </span>
+                  </div>
+
+                  {Array.from({ length: [comp1, comp2, comp3].filter(c => c === '123987456').length }).map((_, gIdx) => {
+                    const currentInv = invitadosDataModal[gIdx] || { nombre: '', dni: '' };
+                    return (
+                      <div key={gIdx} className="bg-surface/60 p-2.5 rounded-lg border border-border/60 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-textSec uppercase">
+                            Invitado {gIdx + 1}
+                          </span>
+                          {frecuentesList.length > 0 && (
+                            <select
+                              className="text-[10px] bg-background text-textSec border border-border rounded px-1.5 py-0.5 focus:outline-none focus:border-primary max-w-[150px] truncate"
+                              defaultValue=""
+                              onChange={(e) => {
+                                const sel = frecuentesList[Number(e.target.value)];
+                                if (sel) {
+                                  setInvitadosDataModal(prev => {
+                                    const copy = [...prev];
+                                    copy[gIdx] = { nombre: sel.nombre, dni: sel.dni };
+                                    return copy;
+                                  });
+                                }
+                                e.target.value = "";
+                              }}
+                            >
+                              <option value="" disabled>Frecuentes...</option>
+                              {frecuentesList.map((f, fIdx) => (
+                                <option key={fIdx} value={fIdx}>
+                                  {f.nombre} ({f.dni})
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Nombre y Apellido"
+                            value={currentInv.nombre || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setInvitadosDataModal(prev => {
+                                const copy = [...prev];
+                                copy[gIdx] = { ...copy[gIdx], nombre: val };
+                                return copy;
+                              });
+                            }}
+                            className="w-full text-xs p-1.5 rounded bg-background border border-border text-textPri focus:outline-none focus:border-primary"
+                          />
+                          <input
+                            type="text"
+                            placeholder="DNI Invitado"
+                            value={currentInv.dni || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setInvitadosDataModal(prev => {
+                                const copy = [...prev];
+                                copy[gIdx] = { ...copy[gIdx], dni: val };
+                                return copy;
+                              });
+                            }}
+                            className="w-full text-xs p-1.5 rounded bg-background border border-border text-textPri font-mono focus:outline-none focus:border-primary"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
 

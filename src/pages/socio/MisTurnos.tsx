@@ -5,9 +5,10 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '../../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
-import { QrCode, CheckCircle2, CloudRain, Clock, Users, ShieldAlert } from 'lucide-react';
+import { QrCode, CheckCircle2, CloudRain, Clock, Users, ShieldAlert, UserPlus } from 'lucide-react';
 import { QRScannerModal } from '../../components/QRScannerModal';
 import { CancelarTurnoModal } from '../../components/CancelarTurnoModal';
+import { IdentificarInvitadosModal } from '../../components/IdentificarInvitadosModal';
 import { useClubConfig } from '../../lib/useClubConfig';
 import { resolverCancelacionesTardiasVencidas, resolverTurnosSinValidar, estanTodosValidados } from '../../lib/cancelaciones';
 
@@ -31,6 +32,9 @@ export default function MisTurnos() {
 
   // Estado para modal semáforo de cancelación
   const [turnoParaCancelar, setTurnoParaCancelar] = useState<any>(null);
+
+  // Estado para modal de identificación de invitados
+  const [turnoParaInvitados, setTurnoParaInvitados] = useState<any>(null);
 
   useEffect(() => {
     fetchMisTurnos();
@@ -374,53 +378,71 @@ export default function MisTurnos() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
-                    {rawParts.map((partDni) => {
-                      const isGuest = partDni === '123987456';
-                      const isMe = partDni === socio?.dni;
-                      const isPartTitular = partDni === turno.socio_dni;
-                      const nombre = isGuest
-                        ? 'Invitado Especial'
-                        : sociosMap.get(partDni) || (isPartTitular ? `${turno.socios?.apellido || ''}, ${turno.socios?.nombre || ''}` : `DNI ${partDni}`);
+                    {(() => {
+                      let guestIdx = 0;
+                      const invitadosDatos: Array<{ nombre?: string; dni?: string }> = Array.isArray(turno.invitados_datos)
+                        ? turno.invitados_datos
+                        : [];
 
-                      // El invitado especial queda validado si el titular ya escaneó
-                      const isGuestValidated = isGuest && validadosList.includes(turno.socio_dni);
-                      const isPartValidated = isGuest ? isGuestValidated : validadosList.includes(partDni);
+                      return rawParts.map((partDni, pIndex) => {
+                        const isGuest = partDni === '123987456';
+                        const isMe = partDni === socio?.dni;
+                        const isPartTitular = partDni === turno.socio_dni;
 
-                      return (
-                        <div
-                          key={partDni}
-                          className={`p-2 rounded-lg border flex items-center justify-between text-xs transition-colors ${
-                            isPartValidated
-                              ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
-                              : 'bg-zinc-900/60 border-zinc-800 text-zinc-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 truncate">
-                            {isPartValidated ? (
-                              <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
-                            ) : (
-                              <Clock size={14} className="text-amber-400 shrink-0" />
-                            )}
-                            <span className="font-medium truncate">
-                              {nombre} {isMe && <span className="text-primary font-bold">(Vos)</span>}
-                            </span>
-                            {isPartTitular && (
-                              <span className="text-[10px] text-zinc-500 uppercase">(Titular)</span>
-                            )}
-                          </div>
+                        let nombre = isGuest
+                          ? 'Invitado Especial'
+                          : sociosMap.get(partDni) || (isPartTitular ? `${turno.socios?.apellido || ''}, ${turno.socios?.nombre || ''}` : `DNI ${partDni}`);
 
-                          <span
-                            className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded shrink-0 ${
+                        let guestInfoExtra = '';
+                        if (isGuest) {
+                          const gData = invitadosDatos[guestIdx];
+                          if (gData && (gData.nombre || gData.dni)) {
+                            nombre = gData.nombre ? `Invitado: ${gData.nombre}` : 'Invitado Especial';
+                            if (gData.dni) guestInfoExtra = `(DNI ${gData.dni})`;
+                          }
+                          guestIdx++;
+                        }
+
+                        // El invitado especial queda validado si el titular ya escaneó
+                        const isGuestValidated = isGuest && validadosList.includes(turno.socio_dni);
+                        const isPartValidated = isGuest ? isGuestValidated : validadosList.includes(partDni);
+
+                        return (
+                          <div
+                            key={`${partDni}-${pIndex}`}
+                            className={`p-2 rounded-lg border flex items-center justify-between text-xs transition-colors ${
                               isPartValidated
-                                ? 'bg-emerald-500/20 text-emerald-300'
-                                : 'bg-zinc-800 text-zinc-400'
+                                ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
+                                : 'bg-zinc-900/60 border-zinc-800 text-zinc-300'
                             }`}
                           >
-                            {isPartValidated ? '✓ Validado' : 'Pendiente QR'}
-                          </span>
-                        </div>
-                      );
-                    })}
+                            <div className="flex items-center gap-2 truncate">
+                              {isPartValidated ? (
+                                <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                              ) : (
+                                <Clock size={14} className="text-amber-400 shrink-0" />
+                              )}
+                              <span className="font-medium truncate">
+                                {nombre} {guestInfoExtra && <span className="text-[11px] text-primary font-mono">{guestInfoExtra}</span>} {isMe && <span className="text-primary font-bold">(Vos)</span>}
+                              </span>
+                              {isPartTitular && (
+                                <span className="text-[10px] text-zinc-500 uppercase">(Titular)</span>
+                              )}
+                            </div>
+
+                            <span
+                              className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded shrink-0 ${
+                                isPartValidated
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : 'bg-zinc-800 text-zinc-400'
+                              }`}
+                            >
+                              {isPartValidated ? '✓ Validado' : 'Pendiente QR'}
+                            </span>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
 
                   {!turno.validado && isValidable && !userValidated && (
@@ -435,6 +457,20 @@ export default function MisTurnos() {
 
                 {/* Barra de Acciones */}
                 <div className="flex items-center justify-end gap-2 flex-wrap sm:flex-nowrap pt-2 border-t border-[#1c1c1c]">
+                  {/* Botón para identificar / editar invitados si el turno tiene invitado especial */}
+                  {esTitular && rawParts.includes('123987456') && (
+                    <Button
+                      variant="secondary"
+                      className="text-xs px-3 py-2 flex items-center gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+                      onClick={() => setTurnoParaInvitados(turno)}
+                    >
+                      <UserPlus size={14} />
+                      {Array.isArray(turno.invitados_datos) && turno.invitados_datos.some((i: any) => i.nombre || i.dni)
+                        ? 'Editar Invitados'
+                        : '+ Identificar Invitados'}
+                    </Button>
+                  )}
+
                   {/* Botón para escanear QR si está en el rango de horario y aún no validó */}
                   {isValidable && (
                     <Button
@@ -507,6 +543,15 @@ export default function MisTurnos() {
             alert(mensaje);
             fetchMisTurnos();
           }}
+        />
+      )}
+      {/* Modal Identificar Invitados */}
+      {turnoParaInvitados && (
+        <IdentificarInvitadosModal
+          isOpen={!!turnoParaInvitados}
+          onClose={() => setTurnoParaInvitados(null)}
+          turno={turnoParaInvitados}
+          onSaved={fetchMisTurnos}
         />
       )}
     </div>
