@@ -210,10 +210,23 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const handleScan = async (code: string) => {
     if (hasScannedRef.current || isProcessing) return;
 
-    const cleanCode = (code || '').trim().toUpperCase();
-    const expected = `CAEC-CANCHA-${expectedCanchaId}`;
+    const raw = (code || '').trim();
+    const cleanCode = raw.toUpperCase();
 
-    const isMatch = cleanCode === expected || cleanCode.includes(expected);
+    // 1. Detección formato nuevo URL: .../validar?cancha=1 o .../validar?cancha=2
+    let scannedCanchaId: number | null = null;
+    const urlCanchaMatch = raw.match(/[?&]cancha=(\d+)/i);
+    if (urlCanchaMatch) {
+      scannedCanchaId = parseInt(urlCanchaMatch[1], 10);
+    } else if (cleanCode.includes('CAEC-CANCHA-')) {
+      // 2. Detección formato histórico en texto: CAEC-CANCHA-1
+      const textMatch = cleanCode.match(/CAEC-CANCHA-(\d+)/);
+      if (textMatch) {
+        scannedCanchaId = parseInt(textMatch[1], 10);
+      }
+    }
+
+    const isMatch = scannedCanchaId === expectedCanchaId;
 
     if (isMatch) {
       hasScannedRef.current = true;
@@ -231,10 +244,8 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
           onClose();
         }
       }, 900);
-    } else if (cleanCode.includes('CAEC-CANCHA-')) {
-      const match = cleanCode.match(/CAEC-CANCHA-(\d+)/);
-      const scannedId = match ? match[1] : '';
-      setErrorMsg(`Escaneaste el QR de la Cancha ${scannedId}, pero tu turno es en ${canchaNombre}.`);
+    } else if (scannedCanchaId !== null) {
+      setErrorMsg(`Escaneaste el QR de la Cancha ${scannedCanchaId}, pero tu turno es en ${canchaNombre}.`);
     } else {
       setErrorMsg('El código QR escaneado no pertenece a las canchas del club.');
     }

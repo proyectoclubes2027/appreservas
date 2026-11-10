@@ -45,7 +45,13 @@ export default function Login() {
     }
 
     if (user) {
-      navigate('/', { replace: true });
+      const redirectUrl = sessionStorage.getItem('post_login_redirect');
+      if (redirectUrl) {
+        sessionStorage.removeItem('post_login_redirect');
+        navigate(redirectUrl, { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     }
   }, [user, navigate]);
 

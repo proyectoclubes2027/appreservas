@@ -16,6 +16,7 @@ import ReservasAdmin from './pages/admin/ReservasAdmin';
 import SociosAdmin from './pages/admin/SociosAdmin';
 import GestionAdmin from './pages/admin/GestionAdmin';
 import NoticiasAdmin from './pages/admin/NoticiasAdmin';
+import ValidarTurnoDirecto from './pages/socio/ValidarTurnoDirecto';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: JSX.Element, allowedRoles?: Array<'socio' | 'admin' | 'profesor'> }) => {
   const { user, socio, loading } = useAuth();
@@ -49,6 +50,9 @@ const AppRoutes = () => {
       <Route path="/" element={<Navigate to={socio ? (socio.rol === 'admin' || socio.rol === 'profesor' ? '/admin/reservas' : '/reservar') : '/login'} replace />} />
       <Route path="/login" element={<Login />} />
       
+      {/* Ruta directa para escanear QR con la cámara de fotos (iPhone y Android) */}
+      <Route path="/validar" element={<ValidarTurnoDirecto />} />
+
       {/* Socio Routes */}
       <Route path="/reservar" element={
         <ProtectedRoute allowedRoles={['socio']}><Layout><Reservar /></Layout></ProtectedRoute>
