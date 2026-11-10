@@ -127,28 +127,41 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
           aspectRatio: 1.0,
         };
 
+        // Configuración de cámara con fallback seguro
         const cameraConfig = selectedCameraId
           ? { deviceId: { exact: selectedCameraId } }
-          : {
-              facingMode: 'environment', // Preferir trasera
-              focusMode: 'continuous',   // Autofocus continuo si está disponible
-              advanced: [{ focusMode: 'continuous' }],
-            };
+          : { facingMode: 'environment' };
 
-        await html5QrCode.start(
-          cameraConfig as any,
-          config,
-          (decodedText) => {
-            handleScan(decodedText);
-          },
-          () => {
-            // Ignorar frames intermedios
-          }
-        );
+        try {
+          await html5QrCode.start(
+            cameraConfig as any,
+            config,
+            (decodedText) => {
+              handleScan(decodedText);
+            },
+            () => {
+              // Ignorar frames intermedios
+            }
+          );
+        } catch (initialErr) {
+          console.warn('Fallo al iniciar con configuración primaria, reintentando fallback standard:', initialErr);
+          // Fallback más genérico si el navegador rechazó las constraints avanzadas
+          await html5QrCode.start(
+            { facingMode: 'environment' },
+            { fps: 15, qrbox: { width: 250, height: 250 } },
+            (decodedText) => {
+              handleScan(decodedText);
+            },
+            () => {}
+          );
+        }
       } catch (err: any) {
         console.error('Error al iniciar cámara:', err);
         if (isSubscribed) {
-          setErrorMsg('No se pudo acceder a la cámara. Podés usar la pestaña de Ubicación (GPS) o revisar permisos.');
+          const errMsg = err?.name === 'NotAllowedError' || err?.message?.toLowerCase().includes('permission')
+            ? 'Permiso de cámara denegado. Habilitá la cámara en los permisos del navegador o validá con la pestaña Ubicación (GPS).'
+            : 'No se pudo iniciar la cámara en este navegador. Podés validar tu presencia con la pestaña Ubicación (GPS).';
+          setErrorMsg(errMsg);
         }
       }
     };
