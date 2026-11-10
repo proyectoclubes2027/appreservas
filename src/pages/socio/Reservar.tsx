@@ -9,8 +9,9 @@ import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { loginOneSignal } from '../../lib/onesignal';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useClubConfig } from '../../lib/useClubConfig';
-import { CloudRain, ShieldAlert, UserPlus } from 'lucide-react';
+import { CloudRain, ShieldAlert, UserPlus, QrCode } from 'lucide-react';
 import { CancelarTurnoModal } from '../../components/CancelarTurnoModal';
+import { QRScannerModal } from '../../components/QRScannerModal';
 import { resolverTurnosSinValidar } from '../../lib/cancelaciones';
 import { useSocioSancion } from '../../lib/useSocioSancion';
 import { InvitadoDato, getInvitadosFrecuentes, guardarInvitadoFrecuente } from '../../lib/invitadosStorage';
@@ -47,6 +48,10 @@ export default function Reservar() {
   const [editTurnoId, setEditTurnoId] = useState<string | null>(null);
   const [turnoParaCancelar, setTurnoParaCancelar] = useState<any>(null);
 
+  // State for QR/GPS validation
+  const [scannerTurno, setScannerTurno] = useState<any>(null);
+  const [misTurnosHoy, setMisTurnosHoy] = useState<any[]>([]);
+
   const { config } = useClubConfig();
   const { isSancionado, sancion } = useSocioSancion();
   const diasVisibles = config.dias_anticipacion || 2;
@@ -55,12 +60,12 @@ export default function Reservar() {
   useEffect(() => {
     const initPage = async () => {
       setLoadingLocal(true);
-      await Promise.all([fetchTurnos(), fetchSocios(), fetchCanchas()]);
+      await Promise.all([fetchTurnos(), fetchMisTurnosHoy(), fetchSocios(), fetchCanchas()]);
       resolverTurnosSinValidar(config).catch(console.warn);
       setLoadingLocal(false);
     };
     initPage();
-  }, [selectedDate]);
+  }, [selectedDate, socio]);
 
   useEffect(() => {
     if (location.state?.editTurno && !hasProcessedEditRef.current && sociosList.length > 0) {
@@ -87,11 +92,30 @@ export default function Reservar() {
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const { data, error } = await supabase
       .from('turnos')
-      .select('*, socios(nombre, apellido)')
+      .select('*, canchas(nombre), socios(nombre, apellido)')
       .eq('fecha', dateStr);
 
     if (!error && data) {
       setTurnosData(data);
+    }
+  };
+
+  const fetchMisTurnosHoy = async () => {
+    if (!socio) return;
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const { data, error } = await supabase
+      .from('turnos')
+      .select('*, canchas(nombre), socios(nombre, apellido)')
+      .eq('fecha', todayStr)
+      .eq('estado', 'ocupado');
+
+    if (!error && data) {
+      const propios = data.filter((t: any) => {
+        const isTitular = t.socio_dni === socio.dni;
+        const isPart = Array.isArray(t.participantes_dnis) && t.participantes_dnis.includes(socio.dni);
+        return isTitular || isPart;
+      });
+      setMisTurnosHoy(propios);
     }
   };
 
@@ -532,6 +556,79 @@ export default function Reservar() {
     setReservingLocal(false);
   };
 
+  const isTurnoValidable = (turno: any): boolean => {
+    if (!socio || !turno) return false;
+    if (turno.estado !== 'ocupado') return false;
+
+    // Si ya validó este socio, no requiere escaneo
+    const validados = Array.isArray(turno.validados_dnis) ? turno.validados_dnis : [];
+    if (validados.includes(socio.dni)) return false;
+
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    if (turno.fecha !== todayStr) return false;
+    if (!turno.hora_inicio) return false;
+
+    // Minutos desde medianoche
+    const [startH, startM] = turno.hora_inicio.slice(0, 5).split(':').map(Number);
+    const startMinutes = startH * 60 + startM;
+
+    let endMinutes = startMinutes + 60;
+    if (turno.hora_fin) {
+      const [endH, endM] = turno.hora_fin.slice(0, 5).split(':').map(Number);
+      endMinutes = endH * 60 + endM;
+    }
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const tolerancia = config.tolerancia_minutos || 20;
+    const windowStart = startMinutes - tolerancia;
+    const windowEnd = endMinutes + tolerancia;
+
+    return currentMinutes >= windowStart && currentMinutes <= windowEnd;
+  };
+
+  const turnoActivoParaValidar = misTurnosHoy.find((t) => isTurnoValidable(t));
+
+  const handleTurnoValidated = async () => {
+    if (!scannerTurno || !socio) return;
+    try {
+      if (scannerTurno.id) {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('validar_presencia_turno', {
+          p_turno_id: scannerTurno.id,
+          p_cancha_id: scannerTurno.cancha_id,
+        });
+
+        if (!rpcError && rpcData?.success) {
+          if (rpcData.all_completed) {
+            alert('✓ ¡Turno 100% validado con éxito! Todos los jugadores registraron su presencia en la cancha.');
+          } else {
+            alert('✓ ¡Validaste tu presencia con éxito! Recordá que tus compañeros de turno también deben escanear el QR en la cancha.');
+          }
+          await Promise.all([fetchTurnos(), fetchMisTurnosHoy()]);
+          return;
+        }
+      }
+
+      // Fallback
+      const prevValidados: string[] = Array.isArray(scannerTurno.validados_dnis) ? scannerTurno.validados_dnis : [];
+      const updatedValidados = Array.from(new Set([...prevValidados, socio.dni]));
+      await supabase
+        .from('turnos')
+        .update({
+          validados_dnis: updatedValidados,
+          validado: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', scannerTurno.id);
+
+      alert('✓ ¡Presencia registrada con éxito!');
+      await Promise.all([fetchTurnos(), fetchMisTurnosHoy()]);
+    } catch (e) {
+      console.error('Error al validar turno:', e);
+    }
+  };
+
   const renderBotonCancha = (shift: any, canchaId: number) => {
     const turnoDb = turnosData.find(t => t.hora_inicio.startsWith(shift.start) && t.cancha_id === canchaId);
     
@@ -614,6 +711,42 @@ export default function Reservar() {
           <div className="w-12 h-12 rounded-full bg-[#0d0d0d] flex items-center justify-center border-2 border-primary">
             <span className="text-lg font-bold text-textPri uppercase">{socio.nombre.charAt(0)}{socio.apellido.charAt(0)}</span>
           </div>
+        </div>
+      )}
+
+      {/* Banner de Validación Inmediata de Presencia (QR / GPS) si tiene turno ahora */}
+      {turnoActivoParaValidar && !config.clima_inestable && (
+        <div className="relative overflow-hidden bg-gradient-to-r from-emerald-950/90 via-[#0a2818] to-emerald-950/90 border-2 border-emerald-500/80 rounded-2xl p-5 shadow-2xl shadow-emerald-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-[pulse_3s_infinite] -mt-1 mb-2">
+          <div className="flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 shrink-0">
+              <QrCode size={26} className="animate-bounce" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500 text-black">
+                  Turno Activo Hoy
+                </span>
+                <span className="text-xs text-emerald-300 font-bold font-mono">
+                  {(turnoActivoParaValidar.hora_inicio || '').slice(0, 5)} - {(turnoActivoParaValidar.hora_fin || '').slice(0, 5)} hs
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white mt-1">
+                ¡Validá tu presencia en {turnoActivoParaValidar.canchas?.nombre || 'la cancha'}!
+              </h3>
+              <p className="text-xs text-emerald-200/80 mt-0.5">
+                Podés escanear el QR en la red o confirmar con "Estoy en el Club" (GPS).
+              </p>
+            </div>
+          </div>
+
+          <Button
+            variant="primary"
+            className="w-full sm:w-auto text-sm sm:text-base px-6 py-3.5 font-black flex items-center justify-center gap-2.5 bg-emerald-400 hover:bg-emerald-300 text-black border-none shadow-xl shadow-emerald-500/30 active:scale-95 transition-transform shrink-0"
+            onClick={() => setScannerTurno(turnoActivoParaValidar)}
+          >
+            <QrCode size={20} />
+            <span>VALIDAR AHORA</span>
+          </Button>
         </div>
       )}
 
@@ -910,6 +1043,17 @@ export default function Reservar() {
             alert(mensaje);
             fetchTurnos();
           }}
+        />
+      )}
+
+      {/* Modal de Validación QR / GPS */}
+      {scannerTurno && socio && (
+        <QRScannerModal
+          isOpen={!!scannerTurno}
+          onClose={() => setScannerTurno(null)}
+          expectedCanchaId={scannerTurno.cancha_id}
+          canchaNombre={scannerTurno.canchas?.nombre || `Cancha ${scannerTurno.cancha_id}`}
+          onSuccess={handleTurnoValidated}
         />
       )}
     </div>

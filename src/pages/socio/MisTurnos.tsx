@@ -36,6 +36,9 @@ export default function MisTurnos() {
   // Estado para modal de identificación de invitados
   const [turnoParaInvitados, setTurnoParaInvitados] = useState<any>(null);
 
+  // Turno activo ahora para validar (destacado arriba)
+  const turnoActivoParaValidar = turnos.find((t) => canValidateTurno(t));
+
   useEffect(() => {
     fetchMisTurnos();
   }, [socio]);
@@ -228,6 +231,42 @@ export default function MisTurnos() {
               Debido a las condiciones climáticas del día de hoy, <strong>el escaneo de código QR en la cancha no es obligatorio</strong> y podés cancelar tus reservas en cualquier momento sin ninguna penalidad ni sanción.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Banner Principal Destacado: ¡Turno listo para validar ahora! */}
+      {turnoActivoParaValidar && !config.clima_inestable && (
+        <div className="relative overflow-hidden bg-gradient-to-r from-emerald-950/90 via-[#0a2818] to-emerald-950/90 border-2 border-emerald-500/80 rounded-2xl p-5 shadow-2xl shadow-emerald-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-[pulse_3s_infinite]">
+          <div className="flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 shrink-0">
+              <QrCode size={26} className="animate-bounce" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500 text-black">
+                  Turno Activo Hoy
+                </span>
+                <span className="text-xs text-emerald-300 font-bold font-mono">
+                  {(turnoActivoParaValidar.hora_inicio || '').slice(0, 5)} - {(turnoActivoParaValidar.hora_fin || '').slice(0, 5)} hs
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white mt-1">
+                ¡Validá tu presencia en {turnoActivoParaValidar.canchas?.nombre || 'la cancha'}!
+              </h3>
+              <p className="text-xs text-emerald-200/80 mt-0.5">
+                Podés escanear el QR pegado en la red o confirmar con "Estoy en el Club" (GPS).
+              </p>
+            </div>
+          </div>
+
+          <Button
+            variant="primary"
+            className="w-full sm:w-auto text-sm sm:text-base px-6 py-3.5 font-black flex items-center justify-center gap-2.5 bg-emerald-400 hover:bg-emerald-300 text-black border-none shadow-xl shadow-emerald-500/30 active:scale-95 transition-transform shrink-0"
+            onClick={() => setScannerTurno(turnoActivoParaValidar)}
+          >
+            <QrCode size={20} />
+            <span>VALIDAR AHORA</span>
+          </Button>
         </div>
       )}
 
@@ -471,15 +510,15 @@ export default function MisTurnos() {
                     </Button>
                   )}
 
-                  {/* Botón para escanear QR si está en el rango de horario y aún no validó */}
+                  {/* Botón para escanear QR / Presencia si está en el rango de horario y aún no validó */}
                   {isValidable && (
                     <Button
                       variant="primary"
-                      className="text-xs px-3.5 py-2 font-bold flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-black border-none shadow-lg animate-bounce"
+                      className="w-full sm:w-auto text-sm px-5 py-3 font-extrabold flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black border-none shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all"
                       onClick={() => setScannerTurno(turno)}
                     >
-                      <QrCode size={16} />
-                      Validar mi presencia con QR
+                      <QrCode size={18} />
+                      <span>Validar Presencia / QR</span>
                     </Button>
                   )}
 

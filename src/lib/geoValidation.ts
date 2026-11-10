@@ -30,3 +30,4 @@ export function calcularDistanciaMetros(
 
   return R * c;
 }
+

@@ -40,3 +40,4 @@ export function guardarInvitadoFrecuente(invitado: InvitadoDato): void {
     console.warn('Error guardando invitado frecuente:', e);
   }
 }
+
