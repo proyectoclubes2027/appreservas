@@ -71,14 +71,28 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     }
   };
 
-  // 1. Obtener lista de cámaras disponibles al abrir
+  // 1. Obtener lista de cámaras disponibles al abrir y preseleccionar la trasera
   useEffect(() => {
     if (!isOpen) return;
 
     Html5Qrcode.getCameras()
       .then((devices) => {
         if (devices && devices.length > 0) {
-          setAvailableCameras(devices.map((d) => ({ id: d.id, label: d.label || `Cámara ${d.id}` })));
+          const list = devices.map((d) => ({ id: d.id, label: d.label || `Cámara ${d.id}` }));
+          setAvailableCameras(list);
+
+          // Buscar explícitamente cámara trasera (back / rear / environment)
+          const backCam = list.find((d) => {
+            const lbl = d.label.toLowerCase();
+            return lbl.includes('back') || lbl.includes('rear') || lbl.includes('trasera') || lbl.includes('environment');
+          });
+
+          if (backCam) {
+            setSelectedCameraId(backCam.id);
+          } else if (list.length > 0 && !selectedCameraId) {
+            // En muchos Androids con múltiples lentes traseras, la trasera suele ser la última o primera
+            setSelectedCameraId(list[0].id);
+          }
         }
       })
       .catch((e) => {
@@ -127,14 +141,14 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
           aspectRatio: 1.0,
         };
 
-        // Configuración de cámara con fallback seguro
-        const cameraConfig = selectedCameraId
+        // Si selectedCameraId apunta a un dispositivo exacto, lo usamos; si no, preferimos environment
+        const primaryCamera = selectedCameraId
           ? { deviceId: { exact: selectedCameraId } }
           : { facingMode: 'environment' };
 
         try {
           await html5QrCode.start(
-            cameraConfig as any,
+            primaryCamera as any,
             config,
             (decodedText) => {
               handleScan(decodedText);
@@ -144,16 +158,35 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
             }
           );
         } catch (initialErr) {
-          console.warn('Fallo al iniciar con configuración primaria, reintentando fallback standard:', initialErr);
-          // Fallback más genérico si el navegador rechazó las constraints avanzadas
-          await html5QrCode.start(
-            { facingMode: 'environment' },
-            { fps: 15, qrbox: { width: 250, height: 250 } },
-            (decodedText) => {
-              handleScan(decodedText);
-            },
-            () => {}
-          );
+          console.warn('Fallo al iniciar con cámara primaria, reintentando fallback directo:', initialErr);
+          // 1er Fallback: { facingMode: { ideal: "environment" } }
+          try {
+            await html5QrCode.start(
+              { facingMode: { ideal: 'environment' } } as any,
+              { fps: 15, qrbox: { width: 250, height: 250 } },
+              (decodedText) => {
+                handleScan(decodedText);
+              },
+              () => {}
+            );
+          } catch (secondErr) {
+            console.warn('Fallo 1er fallback, reintentando con cualquier cámara disponible:', secondErr);
+            // 2do Fallback: abrir cualquier cámara disponible sin restricciones
+            const devices = await Html5Qrcode.getCameras().catch(() => []);
+            const targetDevice = devices && devices.length > 0 ? devices[0].id : undefined;
+            if (targetDevice) {
+              await html5QrCode.start(
+                targetDevice,
+                { fps: 10, qrbox: { width: 240, height: 240 } },
+                (decodedText) => {
+                  handleScan(decodedText);
+                },
+                () => {}
+              );
+            } else {
+              throw secondErr;
+            }
+          }
         }
       } catch (err: any) {
         console.error('Error al iniciar cámara:', err);
