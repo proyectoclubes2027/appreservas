@@ -36,9 +36,6 @@ export default function MisTurnos() {
   // Estado para modal de identificación de invitados
   const [turnoParaInvitados, setTurnoParaInvitados] = useState<any>(null);
 
-  // Turno activo ahora para validar (destacado arriba)
-  const turnoActivoParaValidar = turnos.find((t) => canValidateTurno(t));
-
   useEffect(() => {
     fetchMisTurnos();
   }, [socio]);
@@ -125,6 +122,9 @@ export default function MisTurnos() {
 
     return currentMinutes >= windowStart && currentMinutes <= windowEnd;
   };
+
+  // Turno activo ahora para validar (destacado arriba)
+  const turnoActivoParaValidar = turnos.find((t) => canValidateTurno(t));
 
   const handleTurnoValidated = async () => {
     if (!scannerTurno || !socio) return;
