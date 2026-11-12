@@ -236,14 +236,14 @@ export default function MisTurnos() {
 
       {/* Banner Principal Destacado: ¡Turno listo para validar ahora! */}
       {turnoActivoParaValidar && !config.clima_inestable && (
-        <div className="relative overflow-hidden bg-gradient-to-r from-emerald-950/90 via-[#0a2818] to-emerald-950/90 border-2 border-emerald-500/80 rounded-2xl p-5 shadow-2xl shadow-emerald-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-[pulse_3s_infinite]">
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#0c2e1b] via-[#092214] to-[#04120a] border-2 border-emerald-400 rounded-2xl p-5 shadow-[0_0_30px_rgba(16,185,129,0.35)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3.5">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/25 border border-emerald-400/60 flex items-center justify-center text-emerald-300 shrink-0 shadow-lg shadow-emerald-500/20">
               <QrCode size={26} className="animate-bounce" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500 text-black">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-400 text-black">
                   Turno Activo Hoy
                 </span>
                 <span className="text-xs text-emerald-300 font-bold font-mono">
@@ -253,7 +253,7 @@ export default function MisTurnos() {
               <h3 className="text-base sm:text-lg font-black text-white mt-1">
                 ¡Validá tu presencia en {turnoActivoParaValidar.canchas?.nombre || 'la cancha'}!
               </h3>
-              <p className="text-xs text-emerald-200/80 mt-0.5">
+              <p className="text-xs text-emerald-200/90 mt-0.5">
                 Podés escanear el QR pegado en la red o confirmar con "Estoy en el Club" (GPS).
               </p>
             </div>
@@ -261,7 +261,7 @@ export default function MisTurnos() {
 
           <Button
             variant="primary"
-            className="w-full sm:w-auto text-sm sm:text-base px-6 py-3.5 font-black flex items-center justify-center gap-2.5 bg-emerald-400 hover:bg-emerald-300 text-black border-none shadow-xl shadow-emerald-500/30 active:scale-95 transition-transform shrink-0"
+            className="w-full sm:w-auto text-sm sm:text-base px-6 py-3.5 font-black flex items-center justify-center gap-2.5 bg-[#FFCC00] hover:bg-[#e6b800] text-black border-none shadow-xl shadow-amber-500/30 active:scale-95 transition-transform shrink-0"
             onClick={() => setScannerTurno(turnoActivoParaValidar)}
           >
             <QrCode size={20} />

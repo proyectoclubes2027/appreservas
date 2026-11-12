@@ -19,7 +19,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   canchaNombre,
   onSuccess,
 }) => {
-  const [activeTab, setActiveTab] = useState<'qr' | 'gps'>('qr');
+  const [activeTab, setActiveTab] = useState<'selection' | 'qr' | 'gps'>('selection');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -70,6 +70,19 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
       // ignore
     }
   };
+
+  // Reset al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab('selection');
+      setErrorMsg(null);
+      setSuccessMsg(null);
+      setIsProcessing(false);
+      setVerifyingGps(false);
+    } else {
+      stopCameraSafely();
+    }
+  }, [isOpen]);
 
   // 1. Obtener lista de cámaras disponibles al abrir y preseleccionar la trasera
   useEffect(() => {
@@ -322,13 +335,15 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
       <div className="bg-surface border border-border rounded-2xl w-full max-w-sm p-5 flex flex-col relative shadow-2xl">
         {/* Encabezado */}
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex items-center gap-2">
-            <Camera className="text-primary w-6 h-6" />
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary">
+              <Camera className="w-5 h-5" />
+            </div>
             <div>
-              <h3 className="text-base font-bold text-textPri">Validar Turno</h3>
+              <h3 className="text-base font-black text-textPri">Validar Turno</h3>
               <p className="text-xs text-textSec">
-                Cancha: <span className="text-primary font-semibold">{canchaNombre}</span>
+                Cancha: <span className="text-primary font-bold">{canchaNombre}</span>
               </p>
             </div>
           </div>
@@ -337,54 +352,72 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
               stopCameraSafely();
               onClose();
             }}
-            className="p-1 rounded-full text-textSec hover:text-textPri hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-full text-textSec hover:text-textPri hover:bg-white/10 transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Selector de Método: Escáner QR vs Ubicación GPS */}
-        <div className="grid grid-cols-2 gap-1 bg-[#121212] p-1 rounded-xl border border-[#2a2a2a] mb-3">
-          <button
-            type="button"
-            onClick={() => {
-              setErrorMsg(null);
-              setActiveTab('qr');
-            }}
-            className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'qr'
-                ? 'bg-primary text-black shadow-md'
-                : 'text-textSec hover:text-white'
-            }`}
-          >
-            <Camera size={14} />
-            <span>Escanear QR</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setErrorMsg(null);
-              stopCameraSafely();
-              setActiveTab('gps');
-            }}
-            className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'gps'
-                ? 'bg-primary text-black shadow-md'
-                : 'text-textSec hover:text-white'
-            }`}
-          >
-            <MapPin size={14} />
-            <span>Estoy en el Club</span>
-          </button>
-        </div>
+        {/* PANTALLA INICIAL: SELECCIÓN DE MÉTODO (2 BOTONES BIEN GRANDES) */}
+        {activeTab === 'selection' && (
+          <div className="space-y-3.5 my-1">
+            <p className="text-xs text-textSec text-center">
+              Elegí cómo querés confirmar tu presencia en la cancha:
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMsg(null);
+                setActiveTab('qr');
+              }}
+              className="w-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-black p-4 rounded-2xl flex items-center gap-4 text-left shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all border border-amber-300/50"
+            >
+              <div className="w-13 h-13 rounded-xl bg-black/15 flex items-center justify-center shrink-0">
+                <Camera size={28} className="text-black" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-[11px] font-black uppercase tracking-wider block opacity-80">Opción 1</span>
+                <span className="text-base font-black block text-black">ESCANEAR QR</span>
+                <span className="text-[11px] block text-black/80 font-medium">Apuntá al código pegado en la red</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMsg(null);
+                stopCameraSafely();
+                setActiveTab('gps');
+              }}
+              className="w-full bg-[#18181f] hover:bg-[#20202a] text-white p-4 rounded-2xl flex items-center gap-4 text-left shadow-lg border-2 border-emerald-500/60 hover:border-emerald-400 active:scale-[0.98] transition-all"
+            >
+              <div className="w-13 h-13 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 text-emerald-400">
+                <Navigation size={28} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400 block">Opción 2 (Sin cámara)</span>
+                <span className="text-base font-black block text-white">ESTOY EN EL CLUB</span>
+                <span className="text-[11px] block text-zinc-400 font-medium">Validar con GPS (Ubicación actual)</span>
+              </div>
+            </button>
+          </div>
+        )}
 
         {/* MÉTODO 1: ESCÁNER QR OPTIMIZADO */}
         {activeTab === 'qr' && (
           <>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-textSec">
-                Apuntá al código QR ubicado en <strong className="text-textPri">{canchaNombre}</strong>.
-              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  stopCameraSafely();
+                  setActiveTab('selection');
+                }}
+                className="text-xs text-primary font-bold hover:underline flex items-center gap-1"
+              >
+                ← Volver a opciones
+              </button>
               {availableCameras.length > 1 && (
                 <button
                   type="button"
@@ -397,6 +430,10 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
                 </button>
               )}
             </div>
+
+            <p className="text-xs text-textSec mb-2">
+              Apuntá al código QR ubicado en <strong className="text-textPri">{canchaNombre}</strong>.
+            </p>
 
             {/* Visor de la Cámara */}
             <div className="relative w-full aspect-square bg-black rounded-xl overflow-hidden border border-[#2a2a2a] flex items-center justify-center">
@@ -414,14 +451,26 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         {/* MÉTODO 2: VALIDACIÓN POR GPS */}
         {activeTab === 'gps' && (
           <div className="bg-[#121212] border border-[#2a2a2a] rounded-xl p-5 flex flex-col items-center text-center space-y-4 animate-in fade-in">
-            <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+            <div className="w-full flex justify-start">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('selection');
+                }}
+                className="text-xs text-primary font-bold hover:underline"
+              >
+                ← Volver a opciones
+              </button>
+            </div>
+
+            <div className="w-14 h-14 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
               <Navigation className="w-7 h-7" />
             </div>
 
             <div className="space-y-1">
               <h4 className="text-sm font-bold text-textPri">Confirmación por Ubicación</h4>
               <p className="text-xs text-textSec leading-relaxed">
-                Si tenés problemas con la cámara o el reflejo del sol, podés validar tu turno confirmando que estás físicamente dentro del predio de tenis del club.
+                Confirmá que estás físicamente dentro del predio de tenis del club para validar tu presencia sin necesidad de apuntar la cámara.
               </p>
             </div>
 
@@ -430,7 +479,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
               onClick={handleValidateGps}
               disabled={verifyingGps || isProcessing}
               fullWidth
-              className="h-11 font-bold text-xs flex items-center justify-center gap-2"
+              className="h-12 font-black text-xs flex items-center justify-center gap-2 bg-emerald-400 hover:bg-emerald-300 text-black border-none shadow-lg shadow-emerald-500/20"
             >
               {verifyingGps ? (
                 <>
@@ -440,7 +489,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
               ) : (
                 <>
                   <MapPin className="w-4 h-4" />
-                  Validar presencia con mi Ubicación
+                  Confirmar que estoy en el Club
                 </>
               )}
             </Button>
