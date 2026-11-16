@@ -25,11 +25,13 @@ interface Invitado {
   monto: number;
   fechaRegistro: string;
   metodoPago: string;
+  pagado?: boolean;
 }
 
 interface Resumen {
   luzPendiente: number;
   luzPagado: number;
+  invitadosPendiente?: number;
   invitadosPagado: number;
   totalPendiente: number;
 }
@@ -208,25 +210,44 @@ export default function MiCuenta() {
                       <p className="text-xs text-textSec mb-0.5">Total pagado</p>
                       <p className="text-emerald-400 font-bold text-sm">{formatMoney(data.resumen.invitadosPagado)}</p>
                     </div>
+                    <div className="flex-1 bg-background rounded-lg p-3 text-center">
+                      <p className="text-xs text-textSec mb-0.5">Pendiente</p>
+                      <p className={`font-bold text-sm ${(data.resumen.invitadosPendiente || 0) > 0 ? 'text-amber-400' : 'text-textSec'}`}>
+                        {formatMoney(data.resumen.invitadosPendiente || 0)}
+                      </p>
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    {data.invitados.map((inv) => (
-                      <div
-                        key={inv.id}
-                        className="flex items-center justify-between rounded-lg px-3 py-2.5 border border-emerald-800/40 bg-emerald-900/10 text-sm"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-textPri font-medium truncate">{inv.concepto}</p>
-                          <p className="text-textSec text-xs">
-                            {formatFecha(inv.fechaRegistro)} · {inv.metodoPago}
-                          </p>
+                    {data.invitados.map((inv) => {
+                      const isPending = inv.pagado === false;
+                      return (
+                        <div
+                          key={inv.id}
+                          className={`flex items-center justify-between rounded-lg px-3 py-2.5 border text-sm ${
+                            isPending
+                              ? 'border-amber-800/40 bg-amber-900/10'
+                              : 'border-emerald-800/40 bg-emerald-900/10'
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-textPri font-medium truncate">{inv.concepto}</p>
+                            <p className="text-textSec text-xs">
+                              {formatFecha(inv.fechaRegistro)} · {inv.metodoPago}
+                            </p>
+                          </div>
+                          <div className="ml-3 text-right shrink-0">
+                            <p className={`font-bold ${isPending ? 'text-amber-400' : 'text-textPri'}`}>
+                              {formatMoney(inv.monto)}
+                            </p>
+                            {isPending ? (
+                              <span className="text-[10px] text-amber-400 font-bold block mt-0.5">Pendiente</span>
+                            ) : (
+                              <CheckCircle2 size={14} className="text-emerald-400 ml-auto mt-0.5" />
+                            )}
+                          </div>
                         </div>
-                        <div className="ml-3 text-right shrink-0">
-                          <p className="font-bold text-textPri">{formatMoney(inv.monto)}</p>
-                          <CheckCircle2 size={14} className="text-emerald-400 ml-auto mt-0.5" />
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               )}
