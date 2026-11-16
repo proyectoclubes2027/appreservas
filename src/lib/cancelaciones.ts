@@ -318,8 +318,8 @@ export async function resolverTurnosSinValidar(config?: ClubConfig): Promise<num
     const tolerancia = config?.tolerancia_minutos || 20;
     const diasSancion = config?.penalizacion_dias || 7;
 
-    // Solo auditar turnos a partir del inicio de implementación del sistema QR (2026-10-26)
-    const FECHA_MINIMA_QR = '2026-10-26';
+    // Solo auditar turnos a partir de la fecha de inicio oficial (2026-11-16)
+    const FECHA_MINIMA_QR = '2026-11-16';
 
     const { data: turnosSinValidar, error } = await supabase
       .from('turnos')
