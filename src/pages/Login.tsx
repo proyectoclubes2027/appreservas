@@ -87,7 +87,7 @@ export default function Login() {
         return;
       }
 
-      const email = `${cleanDni}@empalmecentral.com`;
+      const email = `${cleanDni}@gmail.com`;
       const authPassword = `${cleanDni}${cleanPassword}`;
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
