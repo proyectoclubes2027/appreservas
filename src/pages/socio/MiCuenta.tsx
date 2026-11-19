@@ -3,7 +3,10 @@ import { useAuth } from '../../context/AuthContext';
 import { Zap, Users, AlertCircle, CheckCircle2, Clock, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 
 // URL del portal de secretaría (dashboard)
-const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || 'https://dashboard-club-demo.vercel.app';
+const envDashboard = import.meta.env.VITE_DASHBOARD_URL;
+const DASHBOARD_URL = (envDashboard && !envDashboard.includes('localhost'))
+  ? envDashboard
+  : 'https://dashboard-club-demo.vercel.app';
 
 interface TurnoLuz {
   turnoId: string;
@@ -65,11 +68,11 @@ function Seccion({ title, icon, defaultOpen = true, children }: {
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-4 py-3 text-left"
       >
-        <div className="flex items-center gap-2 text-textPri font-semibold text-sm">
+        <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
           {icon}
           {title}
         </div>
-        {open ? <ChevronUp size={16} className="text-textSec" /> : <ChevronDown size={16} className="text-textSec" />}
+        {open ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
       </button>
       {open && <div className="px-4 pb-4">{children}</div>}
     </div>
@@ -106,11 +109,11 @@ export default function MiCuenta() {
     <div className="max-w-lg mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-textPri">Mi Cuenta</h1>
+        <h1 className="text-xl font-black text-slate-900">Mi Cuenta</h1>
         <button
           onClick={fetchCuenta}
           disabled={loading}
-          className="p-2 rounded-full text-textSec hover:text-textPri transition-colors"
+          className="p-2 rounded-full text-slate-500 hover:text-textPri transition-colors"
           title="Actualizar"
         >
           <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
@@ -140,18 +143,18 @@ export default function MiCuenta() {
             icon={<Zap size={16} className="text-yellow-400" />}
           >
             {data.turnosLuz.length === 0 ? (
-              <p className="text-textSec text-sm py-2">No tenés turnos nocturnos registrados este año.</p>
+              <p className="text-slate-500 text-sm py-2">No tenés turnos nocturnos registrados este año.</p>
             ) : (
               <>
                 {/* Resumen compacto */}
                 <div className="flex gap-3 mb-3">
-                  <div className="flex-1 bg-background rounded-lg p-3 text-center">
-                    <p className="text-xs text-textSec mb-0.5">Pagado</p>
+                  <div className="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
+                    <p className="text-xs font-semibold text-slate-500 mb-0.5">Pagado</p>
                     <p className="text-emerald-400 font-bold text-sm">{formatMoney(data.resumen.luzPagado)}</p>
                   </div>
-                  <div className="flex-1 bg-background rounded-lg p-3 text-center">
-                    <p className="text-xs text-textSec mb-0.5">Pendiente</p>
-                    <p className={`font-bold text-sm ${data.resumen.luzPendiente > 0 ? 'text-amber-400' : 'text-textSec'}`}>
+                  <div className="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
+                    <p className="text-xs font-semibold text-slate-500 mb-0.5">Pendiente</p>
+                    <p className={`font-bold text-sm ${data.resumen.luzPendiente > 0 ? 'text-amber-400' : 'text-slate-500'}`}>
                       {formatMoney(data.resumen.luzPendiente)}
                     </p>
                   </div>
@@ -172,7 +175,7 @@ export default function MiCuenta() {
                         <p className="text-textPri font-medium truncate">
                           {formatFecha(t.fecha)} · {t.horario}
                         </p>
-                        <p className="text-textSec text-xs">
+                        <p className="text-slate-500 text-xs">
                           {t.cancha} · {t.tipoPartido} · {t.esTitular ? 'Titular' : 'Acompañante'}
                         </p>
                         {t.pagado && t.fechaPago && (
@@ -202,17 +205,17 @@ export default function MiCuenta() {
               defaultOpen={data.invitados.length > 0}
             >
               {data.invitados.length === 0 ? (
-                <p className="text-textSec text-sm py-2">No tenés cargos por invitados este año.</p>
+                <p className="text-slate-500 text-sm py-2">No tenés cargos por invitados este año.</p>
               ) : (
                 <>
                   <div className="flex gap-3 mb-3">
-                    <div className="flex-1 bg-background rounded-lg p-3 text-center">
-                      <p className="text-xs text-textSec mb-0.5">Total pagado</p>
+                    <div className="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
+                      <p className="text-xs font-semibold text-slate-500 mb-0.5">Total pagado</p>
                       <p className="text-emerald-400 font-bold text-sm">{formatMoney(data.resumen.invitadosPagado)}</p>
                     </div>
-                    <div className="flex-1 bg-background rounded-lg p-3 text-center">
-                      <p className="text-xs text-textSec mb-0.5">Pendiente</p>
-                      <p className={`font-bold text-sm ${(data.resumen.invitadosPendiente || 0) > 0 ? 'text-amber-400' : 'text-textSec'}`}>
+                    <div className="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
+                      <p className="text-xs font-semibold text-slate-500 mb-0.5">Pendiente</p>
+                      <p className={`font-bold text-sm ${(data.resumen.invitadosPendiente || 0) > 0 ? 'text-amber-400' : 'text-slate-500'}`}>
                         {formatMoney(data.resumen.invitadosPendiente || 0)}
                       </p>
                     </div>
@@ -231,7 +234,7 @@ export default function MiCuenta() {
                         >
                           <div className="flex-1 min-w-0">
                             <p className="text-textPri font-medium truncate">{inv.concepto}</p>
-                            <p className="text-textSec text-xs">
+                            <p className="text-slate-500 text-xs">
                               {formatFecha(inv.fechaRegistro)} · {inv.metodoPago}
                             </p>
                           </div>
@@ -255,7 +258,7 @@ export default function MiCuenta() {
           )}
 
           {/* Nota al pie */}
-          <p className="text-center text-textSec text-xs mt-2 pb-2">
+          <p className="text-center text-slate-500 text-xs mt-2 pb-2">
             Los pagos son registrados por secretaría. Ante cualquier duda, consultá en el club.
           </p>
         </>
