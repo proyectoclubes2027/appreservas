@@ -768,7 +768,7 @@ export default function Reservar() {
         </div>
       )}
 
-      <h2 className="text-xl font-bold uppercase tracking-wide text-textSec">Seleccioná el día</h2>
+      <h2 className="text-sm font-black uppercase tracking-wider text-slate-700">Seleccioná el día</h2>
       
       {/* Date Selector */}
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -779,10 +779,10 @@ export default function Reservar() {
               key={idx}
               onClick={() => setSelectedDate(d)}
               className={`flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-xl border-2 transition-colors shadow-sm ${
-                isSelected ? 'bg-primary border-primary text-[#0d0d0d]' : 'bg-white border-slate-200 text-textPri'
+                isSelected ? 'bg-primary border-primary text-white shadow-md' : 'bg-white border-slate-300 text-slate-800 hover:border-slate-400'
               }`}
             >
-              <span className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isSelected ? 'text-[#0d0d0d]' : 'text-textSec'}`}>
+              <span className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isSelected ? 'text-white font-bold' : 'text-slate-500 font-bold'}`}>
                 {format(d, 'EEE', { locale: es })}
               </span>
               <span className="text-xl font-bold leading-none">{format(d, 'dd')}</span>
@@ -791,7 +791,7 @@ export default function Reservar() {
         })}
       </div>
 
-      <h2 className="text-sm font-bold uppercase tracking-wide text-textSec mt-4">Horarios</h2>
+      <h2 className="text-sm font-black uppercase tracking-wider text-slate-700 mt-4">Horarios</h2>
 
       {/* Grid Menu de Canchas y Horarios */}
       <div className="flex flex-col gap-8">
