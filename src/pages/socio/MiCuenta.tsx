@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Zap, Users, AlertCircle, CheckCircle2, Clock, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 
 // URL del portal de secretaría (dashboard)
-const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || 'https://adm-socios-caec-tenis.vercel.app';
+const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || 'https://dashboard-club-demo.vercel.app';
 
 interface TurnoLuz {
   turnoId: string;
