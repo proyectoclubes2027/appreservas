@@ -35,8 +35,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="bg-primary text-[#0d0d0d] p-4 flex items-center justify-between shadow-md">
-        <div className="flex items-center">
-          <img src="/empalme-central-logo.png" alt="CAEC Tenis" className="h-10 sm:h-12 object-contain rounded-md" />
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-[#0d0d0d] flex items-center justify-center text-sm">
+            🎾
+          </div>
+          <span className="font-black text-sm tracking-tight text-[#0d0d0d] uppercase">
+            Club Central
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <button

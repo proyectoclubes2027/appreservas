@@ -131,7 +131,17 @@ export default function Login() {
       <div className="absolute top-0 w-full h-1/2 bg-primary -z-10 rounded-b-[40px]"></div>
 
       <div className="w-full max-w-sm flex flex-col items-center mt-10">
-        <img src="/empalme-central-logo.png" alt="CAEC Tenis" className="w-[280px] h-auto object-contain mb-8 drop-shadow-md rounded-lg" />
+        <div className="flex flex-col items-center mb-8 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#0d0d0d] border border-primary/40 flex items-center justify-center shadow-xl mb-3">
+            <span className="text-2xl font-black text-primary tracking-wider">🎾</span>
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-[#0d0d0d] uppercase">
+            Club Deportivo Central
+          </h1>
+          <p className="text-xs font-bold text-[#0d0d0d]/80 uppercase tracking-widest mt-0.5">
+            Sistema de Turnos y Reservas
+          </p>
+        </div>
 
         <form onSubmit={handleLogin} className="w-full bg-[#161616] border border-[#2a2a2a] p-6 rounded-xl flex flex-col gap-6 shadow-xl">
           <Input
