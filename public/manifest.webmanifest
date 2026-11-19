@@ -1,11 +1,11 @@
 {
-  "name": "CAEC Tenis",
-  "short_name": "CAEC Tenis",
-  "description": "Sistema de Reserva de Canchas - Club Atlético Empalme Central",
+  "name": "Club Atlético Riberas del Paraná - Tenis",
+  "short_name": "CARP Tenis",
+  "description": "Sistema de Reserva de Canchas - Club Atlético Riberas del Paraná",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0d0d0d",
-  "theme_color": "#F5C200",
+  "theme_color": "#DC2626",
   "icons": [
     {
       "src": "/logo.png",

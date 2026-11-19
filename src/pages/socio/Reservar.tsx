@@ -741,7 +741,7 @@ export default function Reservar() {
 
           <Button
             variant="primary"
-            className="w-full sm:w-auto text-sm sm:text-base px-6 py-3.5 font-black flex items-center justify-center gap-2.5 bg-[#FFCC00] hover:bg-[#e6b800] text-black border-none shadow-xl shadow-amber-500/30 active:scale-95 transition-transform shrink-0"
+            className="w-full sm:w-auto text-sm sm:text-base px-6 py-3.5 font-black flex items-center justify-center gap-2.5 bg-[#DC2626] hover:bg-[#e6b800] text-black border-none shadow-xl shadow-amber-500/30 active:scale-95 transition-transform shrink-0"
             onClick={() => setScannerTurno(turnoActivoParaValidar)}
           >
             <QrCode size={20} />

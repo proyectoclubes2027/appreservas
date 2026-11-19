@@ -1,4 +1,4 @@
-export const QR_PREFIX = 'CAEC-CANCHA-';
+export const QR_PREFIX = 'CARP-CANCHA-';
 
 export interface ClubConfig {
   id: string;

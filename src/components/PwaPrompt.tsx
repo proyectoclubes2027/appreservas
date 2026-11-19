@@ -106,7 +106,7 @@ export const PwaPrompt = () => {
           <div className="flex items-center gap-3">
              <img src="/logo.png" alt="Icon" className="w-10 h-10 rounded-lg" />
              <div>
-               <p className="font-bold text-primary">Instalar CAEC Tenis</p>
+               <p className="font-bold text-primary">Instalar CARP Tenis</p>
                <p className="text-[10px] text-textSec mt-0.5 leading-tight">Agregá la App a tu iPhone para habilitar las notificaciones push.</p>
              </div>
           </div>

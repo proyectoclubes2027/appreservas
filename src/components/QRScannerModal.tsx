@@ -231,9 +231,9 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     const urlCanchaMatch = raw.match(/[?&]cancha=(\d+)/i);
     if (urlCanchaMatch) {
       scannedCanchaId = parseInt(urlCanchaMatch[1], 10);
-    } else if (cleanCode.includes('CAEC-CANCHA-')) {
-      // 2. Detección formato histórico en texto: CAEC-CANCHA-1
-      const textMatch = cleanCode.match(/CAEC-CANCHA-(\d+)/);
+    } else if (cleanCode.includes('CARP-CANCHA-')) {
+      // 2. Detección formato histórico en texto: CARP-CANCHA-1
+      const textMatch = cleanCode.match(/CARP-CANCHA-(\d+)/);
       if (textMatch) {
         scannedCanchaId = parseInt(textMatch[1], 10);
       }

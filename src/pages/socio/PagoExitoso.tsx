@@ -26,7 +26,7 @@ export default function PagoExitoso() {
       </div>
 
       <p className="mt-12 text-xs text-textSec italic">
-        Esta es una página de demostración del sistema automatizado de Mercado Pago para CAEC Tenis.
+        Esta es una página de demostración del sistema automatizado de Mercado Pago para CARP Tenis.
       </p>
     </div>
   );

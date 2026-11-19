@@ -21,7 +21,7 @@ serve(async (req) => {
     const body = {
       items: [
         {
-          title: `Adicional Tenis - CAEC (${nombre})`,
+          title: `Adicional Tenis - CARP (${nombre})`,
           quantity: 1,
           unit_price: Number(monto),
           currency_id: "ARS",

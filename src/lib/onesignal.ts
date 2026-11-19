@@ -10,7 +10,7 @@ const doInit = async (): Promise<void> => {
     serviceWorkerPath: '/sw.js',
     serviceWorkerParam: { scope: '/' },
     welcomeNotification: {
-      title: '¡CAEC Tenis!',
+      title: '¡CARP Tenis!',
       message: 'Notificaciones activadas. Te avisaremos cuando se libere un turno.',
     },
   });

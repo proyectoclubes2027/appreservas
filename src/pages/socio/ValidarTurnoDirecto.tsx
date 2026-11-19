@@ -170,8 +170,8 @@ export default function ValidarTurnoDirecto() {
         {/* Encabezado del Club */}
         <div className="flex flex-col items-center text-center space-y-2 border-b border-[#262626] pb-5">
           <img
-            src="/empalme-central-logo.png"
-            alt="CAEC Tenis"
+            src="/logo-club.png"
+            alt="CARP Tenis"
             className="w-48 h-auto object-contain drop-shadow"
           />
           <span className="text-xs font-bold uppercase tracking-widest text-primary pt-1">

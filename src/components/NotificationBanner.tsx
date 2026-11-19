@@ -52,7 +52,7 @@ export const NotificationBanner = () => {
   if (!show) return null;
 
   return (
-    <div className="mx-4 mt-3 bg-gradient-to-r from-[#F5C200]/20 to-[#F5C200]/5 border border-[#F5C200]/40 rounded-xl p-4 flex items-center gap-3 shadow-lg animate-[fadeIn_0.5s_ease-out]">
+    <div className="mx-4 mt-3 bg-gradient-to-r from-[#DC2626]/20 to-[#DC2626]/5 border border-[#DC2626]/40 rounded-xl p-4 flex items-center gap-3 shadow-lg animate-[fadeIn_0.5s_ease-out]">
       <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
         <Bell size={20} className="text-primary" />
       </div>

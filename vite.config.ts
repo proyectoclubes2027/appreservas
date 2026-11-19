@@ -13,9 +13,9 @@ export default defineConfig({
         importScripts: ['https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js']
       },
       manifest: {
-        name: 'Club Atlético Empalme Central - Tenis',
-        short_name: 'CAEC Tenis',
-        description: 'Reserva de canchas de tenis del Club Atlético Empalme Central',
+        name: 'Club Atlético Riberas del Paraná - Tenis',
+        short_name: 'CARP Tenis',
+        description: 'Reserva de canchas de tenis del Club Atlético Riberas del Paraná',
         theme_color: '#F5C200',
         background_color: '#0d0d0d',
         display: 'standalone',

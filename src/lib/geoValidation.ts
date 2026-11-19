@@ -1,4 +1,4 @@
-// Coordenadas aproximadas del predio de tenis del Club Atlético Empalme Central
+// Coordenadas aproximadas del predio de tenis del Club Atlético Riberas del Paraná
 // Hipólito Yrigoyen / Juan José Paso, Empalme Villa Constitución, Santa Fe
 export const CLUB_COORDINATES = {
   latitude: -33.26424,

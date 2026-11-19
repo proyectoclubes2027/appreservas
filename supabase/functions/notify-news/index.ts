@@ -36,7 +36,7 @@ serve(async (req) => {
     const notificationBody = {
       app_id: ONESIGNAL_APP_ID,
       included_segments: ['All'],
-      headings: { es: '📢 Nuevo Comunicado - CAEC', en: '📢 Nuevo Comunicado - CAEC' },
+      headings: { es: '📢 Nuevo Comunicado - CARP', en: '📢 Nuevo Comunicado - CARP' },
       contents: { es: noticia.titulo },
       url: 'https://caectenis.netlify.app',
       priority: 10,

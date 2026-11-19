@@ -113,7 +113,7 @@ export default function ActivateAccount() {
       <div className="absolute top-0 left-0 w-full h-40 bg-primary -z-10 rounded-b-[40px]"></div>
       
       <div className="mt-10 mb-8 flex flex-col items-center">
-        <img src="/empalme-central-logo.png" alt="Logo" className="w-24 h-auto mb-4" />
+        <img src="/logo-club.png" alt="Logo" className="w-24 h-auto mb-4" />
         <h1 className="text-2xl font-bold text-center">Activa tu Cuenta de Socio</h1>
         <p className="text-sm text-textSec text-center mt-2">
           Buscate en la lista y completá tus datos reales <br />para poder reservar canchas.
