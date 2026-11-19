@@ -70,8 +70,8 @@ export const SancionBanner: React.FC = () => {
 
       {/* 2. POP-UP MODAL AL ENTRAR O AL TOCAR EL BANNER */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-[#0d0d0d]/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#141414] border border-red-500/50 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-slate-900/70 z-[100] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-slate-50 border border-red-500/50 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200">
             {/* Cabecera Roja de Alerta */}
             <div className="bg-gradient-to-r from-red-600 to-red-800 p-4 text-white flex justify-between items-center shadow-md">
               <div className="flex items-center gap-2.5">
@@ -121,18 +121,18 @@ export const SancionBanner: React.FC = () => {
               </div>
 
               {/* Motivo de la Sanción */}
-              <div className="bg-[#1c1c1c] border border-border rounded-xl p-3.5">
+              <div className="bg-white border border-border rounded-xl p-3.5">
                 <div className="flex items-center gap-1.5 text-textSec text-[11px] uppercase font-bold tracking-wider mb-1.5">
                   <Info size={13} />
                   <span>Motivo registrado</span>
                 </div>
-                <p className="text-xs text-textPri leading-relaxed font-medium bg-[#141414] p-2.5 rounded-lg border border-white/5">
+                <p className="text-xs text-textPri leading-relaxed font-medium bg-slate-50 p-2.5 rounded-lg border border-white/5">
                   "{sancion.motivo}"
                 </p>
               </div>
 
               {/* Reglas de la Inhabilitación */}
-              <div className="bg-[#181818] rounded-xl p-3 border border-white/5 text-xs text-textSec space-y-1.5">
+              <div className="bg-white rounded-xl p-3 border border-white/5 text-xs text-textSec space-y-1.5">
                 <p className="font-bold text-textPri text-[11px] uppercase tracking-wider">
                   Impacto de la sanción:
                 </p>

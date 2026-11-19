@@ -127,7 +127,7 @@ export default function ActivateAccount() {
             <input
               type="text"
               placeholder="Escribí tu nombre o apellido..."
-              className="w-full bg-[#161616] border border-[#2a2a2a] pl-10 pr-4 py-3 rounded-xl focus:border-primary outline-none transition-all"
+              className="w-full bg-white border border-slate-200 pl-10 pr-4 py-3 rounded-xl focus:border-primary outline-none transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -138,7 +138,7 @@ export default function ActivateAccount() {
               <button
                 key={s.id}
                 onClick={() => setSelectedSocio(s)}
-                className="w-full bg-[#161616] border border-[#2a2a2a] p-4 rounded-xl flex items-center gap-4 hover:border-primary transition-all text-left"
+                className="w-full bg-white border border-slate-200 p-4 rounded-xl flex items-center gap-4 hover:border-primary transition-all text-left"
               >
                 <div className="bg-primary/20 p-2 rounded-lg">
                   <User className="w-5 h-5 text-primary" />
@@ -156,7 +156,7 @@ export default function ActivateAccount() {
           </div>
         </div>
       ) : (
-        <form onSubmit={handleActivate} className="w-full max-w-md mx-auto bg-[#161616] border border-[#2a2a2a] p-6 rounded-xl space-y-6 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <form onSubmit={handleActivate} className="w-full max-w-md mx-auto bg-white border border-slate-200 p-6 rounded-xl space-y-6 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex items-center gap-3 mb-2">
              <Button variant="ghost" onClick={() => setSelectedSocio(null)} className="p-0 h-auto">← Volver</Button>
              <h2 className="font-bold">Activando cuenta de: {selectedSocio.nombre}</h2>

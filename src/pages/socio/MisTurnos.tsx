@@ -356,7 +356,7 @@ export default function MisTurnos() {
                     : 'border-border'
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#222] pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-xs text-textSec font-bold uppercase tracking-wider">
                       {formattedDate}
@@ -548,7 +548,7 @@ export default function MisTurnos() {
                   )}
 
                   {!isFuture && !turno.validado && (
-                    <span className="text-xs text-textSec px-2.5 py-1 bg-[#0d0d0d] rounded border border-[#2a2a2a] uppercase font-bold">
+                    <span className="text-xs text-textSec px-2.5 py-1 bg-slate-100 rounded border border-slate-200 uppercase font-bold">
                       Completado
                     </span>
                   )}

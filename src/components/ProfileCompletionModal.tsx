@@ -54,7 +54,7 @@ export function ProfileCompletionModal() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-      <div className="bg-[#161616] p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-primary/30 relative overflow-hidden">
+      <div className="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-primary/30 relative overflow-hidden">
         
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-orange-500"></div>
 

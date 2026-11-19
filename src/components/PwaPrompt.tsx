@@ -112,7 +112,7 @@ export const PwaPrompt = () => {
           </div>
           <button onClick={handleDismiss} className="text-textSec hover:text-textPri">✕</button>
         </div>
-        <div className="bg-[#0d0d0d] rounded-lg p-3 text-xs flex items-center justify-center gap-2 border border-[#2a2a2a]">
+        <div className="bg-slate-100 rounded-lg p-3 text-xs flex items-center justify-center gap-2 border border-slate-200">
           Toca el icono <span className="text-primary text-xl pb-1">⍗</span> Compartir<br/> y luego "Agregar a Inicio" <span className="px-1 py-0.5 border border-textSec rounded text-[10px]">+</span>
         </div>
       </div>

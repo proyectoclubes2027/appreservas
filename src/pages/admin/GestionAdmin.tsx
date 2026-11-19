@@ -243,7 +243,7 @@ export default function GestionAdmin() {
 
         <button
           onClick={() => { refreshConfig(); fetchPenalizaciones(); }}
-          className="p-2.5 bg-[#0d0d0d] hover:bg-surface border border-border rounded-xl text-textSec hover:text-textPri text-xs font-semibold flex items-center gap-1.5 transition-colors self-end sm:self-auto"
+          className="p-2.5 bg-slate-100 hover:bg-surface border border-border rounded-xl text-textSec hover:text-textPri text-xs font-semibold flex items-center gap-1.5 transition-colors self-end sm:self-auto"
           title="Actualizar datos"
         >
           <RefreshCw size={15} />
@@ -296,7 +296,7 @@ export default function GestionAdmin() {
         <div className={`p-3 rounded-xl text-xs ${
           climaInestable 
             ? 'bg-sky-500/10 border border-sky-500/30 text-sky-200' 
-            : 'bg-[#0d0d0d] border border-[#2a2a2a] text-textSec'
+            : 'bg-slate-100 border border-slate-200 text-textSec'
         }`}>
           {climaInestable ? (
             <p>
@@ -329,7 +329,7 @@ export default function GestionAdmin() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Switch QR Activo */}
-          <div className="p-3.5 bg-[#0d0d0d] rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+          <div className="p-3.5 bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-between">
             <div>
               <p className="font-bold text-textPri text-sm">Exigir QR Obligatorio</p>
               <p className="text-xs text-textSec mt-0.5">Sanciona si algún socio participante no escanea el QR.</p>
@@ -343,14 +343,14 @@ export default function GestionAdmin() {
             >
               <span
                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  qrActivo ? 'translate-x-5 !bg-[#0d0d0d]' : 'translate-x-0'
+                  qrActivo ? 'translate-x-5 !bg-slate-100' : 'translate-x-0'
                 }`}
               />
             </button>
           </div>
 
           {/* Switch Banner Informativo */}
-          <div className="p-3.5 bg-[#0d0d0d] rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+          <div className="p-3.5 bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-between">
             <div>
               <p className="font-bold text-textPri text-sm">Aviso de QR a Socios</p>
               <p className="text-xs text-textSec mt-0.5">Muestra un banner recordatorio en el inicio de la app.</p>
@@ -364,7 +364,7 @@ export default function GestionAdmin() {
             >
               <span
                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  mostrarAvisoQr ? 'translate-x-5 !bg-[#0d0d0d]' : 'translate-x-0'
+                  mostrarAvisoQr ? 'translate-x-5 !bg-slate-100' : 'translate-x-0'
                 }`}
               />
             </button>
@@ -373,7 +373,7 @@ export default function GestionAdmin() {
 
         {/* Parámetros de tolerancia y sanción */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-          <div className="flex flex-col gap-1.5 p-3.5 bg-[#0d0d0d] rounded-xl border border-[#2a2a2a]">
+          <div className="flex flex-col gap-1.5 p-3.5 bg-slate-100 rounded-xl border border-slate-200">
             <label className="text-xs font-semibold text-textSec flex items-center gap-1.5">
               <Clock size={14} className="text-primary" />
               Tolerancia para escanear (minutos)
@@ -391,7 +391,7 @@ export default function GestionAdmin() {
             </span>
           </div>
 
-          <div className="flex flex-col gap-1.5 p-3.5 bg-[#0d0d0d] rounded-xl border border-[#2a2a2a]">
+          <div className="flex flex-col gap-1.5 p-3.5 bg-slate-100 rounded-xl border border-slate-200">
             <label className="text-xs font-semibold text-textSec flex items-center gap-1.5">
               <ShieldAlert size={14} className="text-amber-400" />
               Días de sanción por no validar
@@ -411,7 +411,7 @@ export default function GestionAdmin() {
         </div>
 
         {/* Botón de Auditoría Inmediata de QR */}
-        <div className="bg-[#0d0d0d] p-3.5 rounded-xl border border-dashed border-[#333] flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="bg-slate-100 p-3.5 rounded-xl border border-dashed border-slate-300 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <Zap size={18} className="text-amber-400 shrink-0" />
             <div>
@@ -453,7 +453,7 @@ export default function GestionAdmin() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1.5 p-3.5 bg-[#0d0d0d] rounded-xl border border-[#2a2a2a]">
+          <div className="flex flex-col gap-1.5 p-3.5 bg-slate-100 rounded-xl border border-slate-200">
             <label className="text-xs font-semibold text-textSec flex items-center gap-1.5">
               <Calendar size={14} className="text-primary" />
               Días de anticipación para reservar
@@ -471,7 +471,7 @@ export default function GestionAdmin() {
             </span>
           </div>
 
-          <div className="flex flex-col gap-2 p-3.5 bg-[#0d0d0d] rounded-xl border border-[#2a2a2a] justify-center">
+          <div className="flex flex-col gap-2 p-3.5 bg-slate-100 rounded-xl border border-slate-200 justify-center">
             <div className="flex items-center gap-2 text-textPri text-xs font-bold">
               <CheckCircle2 size={15} className="text-primary" />
               <span>Límite de Turnos Simultáneos</span>
@@ -531,7 +531,7 @@ export default function GestionAdmin() {
         {loadingPenalizaciones ? (
           <div className="p-6 text-center text-xs text-textSec">Cargando sanciones activas...</div>
         ) : penalizaciones.length === 0 ? (
-          <div className="p-6 text-center bg-[#0d0d0d] rounded-xl border border-[#2a2a2a]">
+          <div className="p-6 text-center bg-slate-100 rounded-xl border border-slate-200">
             <ShieldCheck size={28} className="text-emerald-400 mx-auto mb-2 opacity-80" />
             <p className="text-sm font-bold text-textPri">No hay socios sancionados hoy</p>
             <p className="text-xs text-textSec mt-1">
@@ -549,7 +549,7 @@ export default function GestionAdmin() {
               return (
                 <div
                   key={p.id}
-                  className="p-3.5 bg-[#0d0d0d] border border-border/80 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"
+                  className="p-3.5 bg-slate-100 border border-border/80 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"
                 >
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
@@ -609,7 +609,7 @@ export default function GestionAdmin() {
             type="button"
             onClick={() => handleDesbloquearDia(6, 'Sábados')}
             disabled={actionLoading}
-            className="p-3 bg-[#0d0d0d] hover:bg-[#151515] border border-border rounded-xl text-left transition-colors flex items-center justify-between"
+            className="p-3 bg-slate-100 hover:bg-white border border-border rounded-xl text-left transition-colors flex items-center justify-between"
           >
             <div>
               <p className="text-xs font-bold text-textPri">Desbloquear Sábados</p>
@@ -622,7 +622,7 @@ export default function GestionAdmin() {
             type="button"
             onClick={() => handleDesbloquearDia(0, 'Domingos')}
             disabled={actionLoading}
-            className="p-3 bg-[#0d0d0d] hover:bg-[#151515] border border-border rounded-xl text-left transition-colors flex items-center justify-between"
+            className="p-3 bg-slate-100 hover:bg-white border border-border rounded-xl text-left transition-colors flex items-center justify-between"
           >
             <div>
               <p className="text-xs font-bold text-textPri">Desbloquear Domingos</p>

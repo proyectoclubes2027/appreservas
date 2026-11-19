@@ -63,7 +63,7 @@ export default function Agenda() {
                     <p className="text-primary font-bold text-base">
                       {turno.hora_inicio.slice(0,5)} - {turno.hora_fin.slice(0,5)}
                     </p>
-                    <div className="flex flex-col gap-1 bg-[#0d0d0d] p-2 mt-1 rounded-md border border-[#2a2a2a]">
+                    <div className="flex flex-col gap-1 bg-slate-100 p-2 mt-1 rounded-md border border-slate-200">
                       <p className="text-sm text-textPri font-bold">
                         👤 {turno.socios?.apellido}, {turno.socios?.nombre}
                       </p>
@@ -74,7 +74,7 @@ export default function Agenda() {
                       )}
                     </div>
                   </div>
-                  <span className="text-xs bg-[#0d0d0d] text-primary px-2 border border-primary font-bold rounded mt-1 whitespace-nowrap hidden sm:block">
+                  <span className="text-xs bg-slate-100 text-primary px-2 border border-primary font-bold rounded mt-1 whitespace-nowrap hidden sm:block">
                     {turno.canchas.nombre}
                   </span>
                   <span className="text-[10px] bg-primary text-[#0d0d0d] px-1 font-bold rounded mt-1 whitespace-nowrap block sm:hidden">

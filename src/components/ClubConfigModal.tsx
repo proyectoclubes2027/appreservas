@@ -87,7 +87,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
           <div className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-colors ${
             climaInestable 
               ? 'bg-sky-950/40 border-sky-500/40 text-sky-200' 
-              : 'bg-[#0d0d0d] border-[#2a2a2a]'
+              : 'bg-slate-100 border-slate-200'
           }`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -116,7 +116,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
           </div>
 
           {/* Switch Validación QR */}
-          <div className="p-3.5 bg-[#0d0d0d] rounded-xl border border-[#2a2a2a] flex flex-col gap-2">
+          <div className="p-3.5 bg-slate-100 rounded-xl border border-slate-200 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <QrCode size={18} className="text-primary" />
@@ -144,7 +144,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
           </div>
 
           {/* Switch Comunicado / Mensaje Informativo QR */}
-          <div className="p-3.5 bg-[#0d0d0d] rounded-xl border border-[#2a2a2a] flex flex-col gap-2">
+          <div className="p-3.5 bg-slate-100 rounded-xl border border-slate-200 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Megaphone size={18} className="text-amber-400" />
@@ -190,7 +190,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
                   className={`p-2.5 rounded-lg border text-xs font-semibold transition-all ${
                     diasAnticipacion === opt.val
                       ? 'bg-primary text-[#0d0d0d] border-primary font-bold shadow'
-                      : 'bg-[#0d0d0d] text-textPri border-[#2a2a2a] hover:border-textSec'
+                      : 'bg-slate-100 text-textPri border-slate-200 hover:border-textSec'
                   }`}
                 >
                   {opt.label}
@@ -215,7 +215,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
                 max="60"
                 value={tolerancia}
                 onChange={(e) => setTolerancia(Number(e.target.value))}
-                className="w-24 bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg px-3 py-2 text-textPri font-bold text-center focus:border-primary outline-none"
+                className="w-24 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-textPri font-bold text-center focus:border-primary outline-none"
               />
               <span className="text-xs text-textSec">
                 minutos antes y después del inicio del turno.
@@ -236,7 +236,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
                 max="90"
                 value={penalizacionDias}
                 onChange={(e) => setPenalizacionDias(Number(e.target.value))}
-                className="w-24 bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg px-3 py-2 text-textPri font-bold text-center focus:border-primary outline-none"
+                className="w-24 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-textPri font-bold text-center focus:border-primary outline-none"
               />
               <span className="text-xs text-textSec">
                 días sin poder reservar ({penalizacionDias === 7 ? '1 semana' : `${penalizacionDias} días`}).
@@ -245,7 +245,7 @@ export const ClubConfigModal: React.FC<ClubConfigModalProps> = ({
           </div>
 
           {onOpenPenalizaciones && (
-            <div className="pt-2 border-t border-[#2a2a2a]">
+            <div className="pt-2 border-t border-slate-200">
               <button
                 type="button"
                 onClick={onOpenPenalizaciones}

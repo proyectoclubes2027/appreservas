@@ -417,7 +417,7 @@ export default function ReservasAdmin() {
 
     let bgClass = "bg-surface border-available text-available hover:bg-available/10";
     if (isVencido) {
-      bgClass = "bg-surface border-[#2a2a2a] text-[#555] opacity-50 cursor-not-allowed";
+      bgClass = "bg-surface border-slate-200 text-[#555] opacity-50 cursor-not-allowed";
     } else if (isBloqueado) {
       bgClass = "bg-surface border-blocked text-blocked opacity-80 cursor-pointer";
     } else if (isOcupado) {
@@ -470,7 +470,7 @@ export default function ReservasAdmin() {
                 className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 border ${
                   config.clima_inestable
                     ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 animate-pulse'
-                    : 'bg-[#0d0d0d] hover:bg-[#181818] text-textSec hover:text-textPri border-border'
+                    : 'bg-slate-100 hover:bg-white text-textSec hover:text-textPri border-border'
                 }`}
                 title="Activar / Desactivar modo de clima inestable por lluvia"
               >
@@ -558,7 +558,7 @@ export default function ReservasAdmin() {
               key={idx}
               onClick={() => setSelectedDate(d)}
               className={`flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-xl border-2 transition-colors shadow-sm ${
-                isSelected ? 'bg-primary border-primary text-[#0d0d0d]' : 'bg-[#161616] border-[#2a2a2a] text-textPri'
+                isSelected ? 'bg-primary border-primary text-[#0d0d0d]' : 'bg-white border-slate-200 text-textPri'
               }`}
             >
               <span className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isSelected ? 'text-[#0d0d0d]' : 'text-textSec'}`}>
@@ -570,7 +570,7 @@ export default function ReservasAdmin() {
         })}
         
         {/* Date Picker Arbitrario */}
-        <div className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-xl border-2 border-[#2a2a2a] bg-[#161616] relative overflow-hidden transition-colors hover:border-primary/50 group">
+        <div className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-xl border-2 border-slate-200 bg-white relative overflow-hidden transition-colors hover:border-primary/50 group">
           <input 
             type="date" 
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
@@ -597,7 +597,7 @@ export default function ReservasAdmin() {
           <>
             {canchasList.map(cancha => (
               <div key={cancha.id}>
-                <div className="flex justify-between items-center mb-4 border-b border-[#2a2a2a] pb-2">
+                <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-2">
                   <h3 className="text-lg font-bold text-textPri">{cancha.nombre}</h3>
                   <span className="text-xs text-textSec">Click en Libre para Bloquear</span>
                 </div>
@@ -611,8 +611,8 @@ export default function ReservasAdmin() {
             <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium items-center justify-start mt-6 border-t border-border pt-6 text-textPri">
               <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-[#93c5fd]"></div> Libre</div>
               <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-[#1d4ed8]"></div> Ocupado</div>
-              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md border border-blocked bg-[#161616]"></div> Bloqueado</div>
-              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md border border-[#2a2a2a] bg-[#161616]"></div> Vencido</div>
+              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md border border-blocked bg-white"></div> Bloqueado</div>
+              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md border border-slate-200 bg-white"></div> Vencido</div>
             </div>
           </>
         )}
@@ -620,7 +620,7 @@ export default function ReservasAdmin() {
 
       {/* Modal Bloqueo */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-[#0d0d0d]/80 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
           <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm">
             <h3 className="text-lg font-bold mb-1">Bloquear Cancha {modalCanchaId}</h3>
             <p className="text-sm mb-4 text-textSec border-b border-border/50 pb-2">
@@ -690,7 +690,7 @@ export default function ReservasAdmin() {
             </label>
             <input
               type="text"
-              className="w-full bg-[#0d0d0d] border border-border rounded-md p-3 text-textPri outline-none focus:border-primary mb-6 text-sm"
+              className="w-full bg-slate-100 border border-border rounded-md p-3 text-textPri outline-none focus:border-primary mb-6 text-sm"
               placeholder="Detalle del motivo..."
               value={motivoBloqueo}
               onChange={e => setMotivoBloqueo(e.target.value)}
@@ -706,7 +706,7 @@ export default function ReservasAdmin() {
 
       {/* Modal Bloqueo Masivo */}
       {isMassBlockModalOpen && (
-        <div className="fixed inset-0 bg-[#0d0d0d]/80 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
           <div className="bg-surface border border-danger/50 shadow-[0_0_15px_rgba(239,68,68,0.15)] rounded-xl p-6 w-full max-w-sm">
             <h3 className="text-xl font-black mb-1 text-danger uppercase tracking-tighter">⛈️ Bloqueo Masivo</h3>
             <p className="text-sm mb-6 text-textSec">Día: {format(selectedDate, 'dd/MM/yyyy')}</p>
@@ -715,7 +715,7 @@ export default function ReservasAdmin() {
               <div>
                 <label className="text-xs font-bold text-textSec uppercase mb-1 block">A partir del horario:</label>
                 <select 
-                  className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-md p-3 text-textPri outline-none focus:border-primary"
+                  className="w-full bg-slate-100 border border-slate-200 rounded-md p-3 text-textPri outline-none focus:border-primary"
                   value={massBlockStartHour}
                   onChange={e => setMassBlockStartHour(e.target.value)}
                 >
@@ -729,7 +729,7 @@ export default function ReservasAdmin() {
                 <label className="text-xs font-bold text-textSec uppercase mb-1 block">Motivo (Visible para socios):</label>
                 <input
                   type="text"
-                  className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-md p-3 text-textPri outline-none focus:border-danger"
+                  className="w-full bg-slate-100 border border-slate-200 rounded-md p-3 text-textPri outline-none focus:border-danger"
                   placeholder="Ej: Lluvia / Cierre temporal"
                   value={massBlockMotivo}
                   onChange={e => setMassBlockMotivo(e.target.value)}
@@ -753,7 +753,7 @@ export default function ReservasAdmin() {
 
       {/* Modal Detalle (Turno Ocupado/Bloqueado Admin) */}
       {infoTurno && (
-        <div className="fixed inset-0 bg-[#0d0d0d]/80 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
           <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm text-center">
             <h3 className="text-lg font-bold mb-2 text-primary">Gestión del Turno</h3>
             <p className="text-textSec mb-6 border-b border-border pb-4">{infoTurno.shift.start} a {infoTurno.shift.end}hs - Cancha {infoTurno.cancha_id}</p>
@@ -761,7 +761,7 @@ export default function ReservasAdmin() {
             {infoTurno.estado === 'bloqueado' ? (
               <p className="text-blocked text-lg font-semibold bg-blocked/10 p-4 rounded-lg mb-6">{infoTurno.motivo_bloqueo || 'Bloqueado por Mantenimiento'}</p>
             ) : (
-              <div className="bg-[#0d0d0d] rounded-lg p-4 border border-[#2a2a2a] text-left mb-6">
+              <div className="bg-slate-100 rounded-lg p-4 border border-slate-200 text-left mb-6">
                 <p className="text-xs font-bold text-textSec mb-1 uppercase">Titular de la Reserva</p>
                 <p className="text-lg text-primary">{infoTurno.socios.apellido}, {infoTurno.socios.nombre}</p>
                 <p className="text-[10px] text-textSec mt-1 leading-tight">DNI: {infoTurno.socio_dni}</p>
@@ -779,7 +779,7 @@ export default function ReservasAdmin() {
                 </div>
                 
                 {infoTurno.participantes_dnis && infoTurno.participantes_dnis.length > 0 && (
-                  <div className="mt-4 pt-3 border-t border-[#2a2a2a]">
+                  <div className="mt-4 pt-3 border-t border-slate-200">
                     <p className="text-xs font-bold text-textSec mb-2 uppercase">Validación individual de jugadores</p>
                     <div className="flex flex-col gap-1.5">
                       {infoTurno.participantes_dnis.map((dni: string) => {
@@ -803,7 +803,7 @@ export default function ReservasAdmin() {
                 )}
 
                 {infoTurno.acompanante && (!infoTurno.participantes_dnis || infoTurno.participantes_dnis.length === 0) && (
-                  <div className="mt-4 pt-4 border-t border-[#2a2a2a]">
+                  <div className="mt-4 pt-4 border-t border-slate-200">
                     <p className="text-xs font-bold text-textSec mb-1 uppercase">Jugadores adicionales</p>
                     <p className="text-sm text-textPri">{infoTurno.acompanante}</p>
                   </div>

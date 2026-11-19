@@ -96,7 +96,7 @@ export const IdentificarInvitadosModal: React.FC<IdentificarInvitadosModalProps>
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0d0d0d]/80 z-[110] flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-surface border border-border rounded-xl p-5 w-full max-w-md my-auto shadow-2xl relative">
         <div className="flex justify-between items-start border-b border-border pb-3 mb-4">
           <div className="flex items-center gap-2">
@@ -124,7 +124,7 @@ export const IdentificarInvitadosModal: React.FC<IdentificarInvitadosModalProps>
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
           {invitadosList.map((inv, idx) => (
-            <div key={idx} className="p-3 bg-[#0d0d0d] rounded-lg border border-[#2a2a2a] space-y-2.5">
+            <div key={idx} className="p-3 bg-slate-100 rounded-lg border border-slate-200 space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-primary uppercase">
                   Invitado {invitadosList.length > 1 ? `#${idx + 1}` : ''}

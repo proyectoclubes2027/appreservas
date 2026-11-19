@@ -16,8 +16,8 @@ export default defineConfig({
         name: 'Club Atlético Riberas del Paraná - Tenis',
         short_name: 'CARP Tenis',
         description: 'Reserva de canchas de tenis del Club Atlético Riberas del Paraná',
-        theme_color: '#F5C200',
-        background_color: '#0d0d0d',
+        theme_color: '#DC2626',
+        background_color: '#FFFFFF',
         display: 'standalone',
         icons: [
           {

@@ -138,7 +138,7 @@ export const PenalizacionesModal: React.FC<PenalizacionesModalProps> = ({ isOpen
           {loading ? (
             <p className="text-center py-10 text-textSec text-sm">Cargando sanciones...</p>
           ) : penalizaciones.length === 0 ? (
-            <div className="text-center py-12 px-4 bg-[#0d0d0d] rounded-xl border border-[#2a2a2a]">
+            <div className="text-center py-12 px-4 bg-slate-100 rounded-xl border border-slate-200">
               <ShieldCheck size={36} className="mx-auto text-emerald-400 mb-2 opacity-80" />
               <p className="font-bold text-sm text-textPri">No hay socios sancionados</p>
               <p className="text-xs text-textSec mt-1">Todos los socios están habilitados para reservar normalmente.</p>
@@ -148,7 +148,7 @@ export const PenalizacionesModal: React.FC<PenalizacionesModalProps> = ({ isOpen
               {penalizaciones.map((p) => (
                 <div
                   key={p.id}
-                  className="bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl p-3.5 flex items-center justify-between gap-3 hover:border-amber-500/40 transition-colors"
+                  className="bg-slate-100 border border-slate-200 rounded-xl p-3.5 flex items-center justify-between gap-3 hover:border-amber-500/40 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm text-textPri truncate">

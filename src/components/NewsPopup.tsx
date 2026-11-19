@@ -29,7 +29,7 @@ export const NewsPopup = () => {
   if (!isOpen || !noticia) return null;
 
   return (
-    <div className="fixed inset-0 bg-[#0d0d0d]/90 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-slate-900/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-surface border border-primary/30 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden relative animate-in fade-in zoom-in duration-300">
         {/* Header con gradiente */}
         <div className="bg-primary p-4 flex justify-between items-center">

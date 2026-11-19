@@ -132,18 +132,18 @@ export default function Login() {
 
       <div className="w-full max-w-sm flex flex-col items-center mt-10">
         <div className="flex flex-col items-center mb-8 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#0d0d0d] border border-primary/40 flex items-center justify-center shadow-xl mb-3">
-            <span className="text-2xl font-black text-primary tracking-wider">🎾</span>
+          <div className="w-20 h-20 rounded-full bg-white p-1 border-2 border-white/50 flex items-center justify-center shadow-xl mb-3 overflow-hidden">
+            <img src="/logo.png" alt="Escudo CARP" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-[#0d0d0d] uppercase">
-            Club Deportivo Central
+          <h1 className="text-2xl font-black tracking-tight text-white uppercase drop-shadow-sm">
+            Club Atlético Riberas del Paraná
           </h1>
-          <p className="text-xs font-bold text-[#0d0d0d]/80 uppercase tracking-widest mt-0.5">
+          <p className="text-xs font-bold text-white/90 uppercase tracking-widest mt-1">
             Sistema de Turnos y Reservas
           </p>
         </div>
 
-        <form onSubmit={handleLogin} className="w-full bg-[#161616] border border-[#2a2a2a] p-6 rounded-xl flex flex-col gap-6 shadow-xl">
+        <form onSubmit={handleLogin} className="w-full bg-white border border-gray-200 p-6 rounded-2xl flex flex-col gap-6 shadow-xl">
           <Input
             label="Número de DNI"
             placeholder="Ej: 28456789 (o admin)"
@@ -165,13 +165,13 @@ export default function Login() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-[38px] text-[#555] hover:text-primary transition-colors"
+              className="absolute right-3 top-[38px] text-gray-400 hover:text-primary transition-colors"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
 
-          {error && <p className="text-blocked text-sm text-center">{error}</p>}
+          {error && <p className="text-blocked text-sm text-center font-medium">{error}</p>}
 
           <Button type="submit" fullWidth disabled={loadingLocal || !dni || !password}>
             {loadingLocal ? 'Ingresando...' : 'Ingresar'}
@@ -194,7 +194,7 @@ export default function Login() {
               Tu contraseña son los últimos<br /> 4 dígitos de tu DNI
             </p>
             {/* Hint for iOS users who don't see the button */}
-            <p className="text-[10px] text-[#555] italic lg:hidden">
+            <p className="text-[10px] text-gray-400 italic lg:hidden">
               En iPhone: Tocar Compartir y "Añadir a pantalla de inicio"
             </p>
           </div>

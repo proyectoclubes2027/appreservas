@@ -52,7 +52,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Busc
       <div className="relative flex items-center">
         <input
           type="text"
-          className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl py-3 pl-4 pr-10 text-sm text-textPri outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-[#555] shadow-inner"
+          className="w-full bg-slate-100 border border-slate-300 rounded-xl py-3 pl-4 pr-10 text-sm text-textPri outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-[#555] shadow-inner"
           placeholder={placeholder}
           value={displayValue}
           onFocus={() => { setIsOpen(true); setSearch(''); }}
@@ -66,7 +66,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Busc
       </div>
 
       {isOpen && (
-        <div className="absolute z-[100] w-full mt-2 bg-[#161616] border border-[#333] rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7)] backdrop-blur-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute z-[100] w-full mt-2 bg-white border border-slate-300 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7)] backdrop-blur-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
           <ul className="max-h-[250px] overflow-y-auto custom-scrollbar p-1">
             {filtered.length === 0 ? (
               <div className="p-8 text-center">
@@ -87,7 +87,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Busc
                         ? 'bg-[#1a0f0f]/40 border border-blocked/20 text-blocked cursor-not-allowed'
                         : isSelected 
                           ? 'bg-primary text-[#0d0d0d] cursor-pointer' 
-                          : 'hover:bg-[#252525] text-textPri cursor-pointer'
+                          : 'hover:bg-slate-100 text-textPri cursor-pointer'
                     }`}
                     onClick={() => {
                       if (isMoroso) return;
@@ -101,7 +101,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Busc
                         ? 'bg-blocked/10 border-blocked/30 text-blocked'
                         : isSelected 
                           ? 'bg-black/10 border-black/20' 
-                          : 'bg-[#0d0d0d] border-[#333] text-primary group-hover:border-primary/30 transition-colors'
+                          : 'bg-slate-100 border-slate-300 text-primary group-hover:border-primary/30 transition-colors'
                     }`}>
                       {initials}
                     </div>

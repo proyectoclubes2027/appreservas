@@ -33,7 +33,7 @@ export const QRAnnouncementBanner: React.FC = () => {
   };
 
   return (
-    <div className="mx-4 mt-3 mb-3 bg-[#141414] border border-primary/30 rounded-2xl p-4 shadow-xl relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+    <div className="mx-4 mt-3 mb-3 bg-slate-50 border border-primary/30 rounded-2xl p-4 shadow-xl relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
       {/* Botón cerrar sutil arriba a la derecha */}
       <button
         onClick={handleDismiss}

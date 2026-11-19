@@ -77,9 +77,9 @@ export const NotificationBanner = () => {
       >
         {requesting ? (
             <span className="flex items-center justify-center gap-0.5">
-              <span className="w-1 h-1 bg-[#0d0d0d] rounded-full animate-bounce"></span>
-              <span className="w-1 h-1 bg-[#0d0d0d] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-              <span className="w-1 h-1 bg-[#0d0d0d] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+              <span className="w-1 h-1 bg-slate-100 rounded-full animate-bounce"></span>
+              <span className="w-1 h-1 bg-slate-100 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+              <span className="w-1 h-1 bg-slate-100 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
             </span>
           ) : 'Activar'}
       </button>

@@ -436,7 +436,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
             </p>
 
             {/* Visor de la Cámara */}
-            <div className="relative w-full aspect-square bg-black rounded-xl overflow-hidden border border-[#2a2a2a] flex items-center justify-center">
+            <div className="relative w-full aspect-square bg-black rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center">
               <div id={readerElementId} className="w-full h-full" />
               {successMsg && (
                 <div className="absolute inset-0 bg-emerald-950/95 flex flex-col items-center justify-center p-4 text-center text-emerald-400 gap-2 animate-[fadeIn_0.2s] z-10">
@@ -450,7 +450,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
 
         {/* MÉTODO 2: VALIDACIÓN POR GPS */}
         {activeTab === 'gps' && (
-          <div className="bg-[#121212] border border-[#2a2a2a] rounded-xl p-5 flex flex-col items-center text-center space-y-4 animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col items-center text-center space-y-4 animate-in fade-in">
             <div className="w-full flex justify-start">
               <button
                 type="button"

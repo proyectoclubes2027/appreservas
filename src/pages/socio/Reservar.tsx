@@ -645,7 +645,7 @@ export default function Reservar() {
 
     let bgClass = "bg-surface border-available text-available hover:bg-available/10";
     if (isVencido) {
-      bgClass = "bg-surface border-[#2a2a2a] text-[#555] opacity-50 cursor-not-allowed";
+      bgClass = "bg-surface border-slate-200 text-[#555] opacity-50 cursor-not-allowed";
     } else if (isBloqueado) {
       bgClass = "bg-surface border-blocked text-blocked opacity-80";
     } else if (isMio) {
@@ -703,12 +703,12 @@ export default function Reservar() {
 
       {/* Welcome Card */}
       {socio && (
-        <div className="flex justify-between items-center bg-[#161616] p-4 rounded-xl border border-[#2a2a2a] mb-2 shadow-sm">
+        <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 mb-2 shadow-sm">
           <div className="flex flex-col">
             <span className="text-[10px] text-textSec uppercase font-bold tracking-wider mb-1">Bienvenido/a</span>
             <span className="text-lg font-bold text-primary leading-none">{socio.nombre} {socio.apellido}</span>
           </div>
-          <div className="w-12 h-12 rounded-full bg-[#0d0d0d] flex items-center justify-center border-2 border-primary">
+          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center border-2 border-primary">
             <span className="text-lg font-bold text-textPri uppercase">{socio.nombre.charAt(0)}{socio.apellido.charAt(0)}</span>
           </div>
         </div>
@@ -779,7 +779,7 @@ export default function Reservar() {
               key={idx}
               onClick={() => setSelectedDate(d)}
               className={`flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-xl border-2 transition-colors shadow-sm ${
-                isSelected ? 'bg-primary border-primary text-[#0d0d0d]' : 'bg-[#161616] border-[#2a2a2a] text-textPri'
+                isSelected ? 'bg-primary border-primary text-[#0d0d0d]' : 'bg-white border-slate-200 text-textPri'
               }`}
             >
               <span className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isSelected ? 'text-[#0d0d0d]' : 'text-textSec'}`}>
@@ -819,7 +819,7 @@ export default function Reservar() {
 
             {canchasList.map(cancha => (
               <div key={cancha.id} className="mb-8">
-                <h3 className="text-lg font-bold text-textPri mb-4 border-b border-[#2a2a2a] pb-2">{cancha.nombre}</h3>
+                <h3 className="text-lg font-bold text-textPri mb-4 border-b border-slate-200 pb-2">{cancha.nombre}</h3>
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                   {SHIFTS.map(shift => renderBotonCancha(shift, cancha.id))}
                 </div>
@@ -831,8 +831,8 @@ export default function Reservar() {
               <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-[#93c5fd]"></div> Turno Libre</div>
               <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-[#1d4ed8]"></div> Turno Reservado</div>
               <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-[#d97706]"></div> Turno Propio</div>
-              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md border border-blocked bg-[#161616]"></div> Bloqueado</div>
-              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md border border-[#2a2a2a] bg-[#161616]"></div> Vencido</div>
+              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md border border-blocked bg-white"></div> Bloqueado</div>
+              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md border border-slate-200 bg-white"></div> Vencido</div>
             </div>
           </>
         )}
@@ -840,7 +840,7 @@ export default function Reservar() {
 
       {/* Modal Reserva */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-[#0d0d0d]/80 z-50 flex items-start justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-start justify-center p-4 overflow-y-auto">
           <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm my-auto overflow-visible">
             <h3 className="text-lg font-bold mb-4">{editTurnoId ? 'Editar Reserva' : 'Confirmar Reserva'}</h3>
             <p className="text-sm mb-4 text-textSec border-b border-border pb-4">
@@ -859,7 +859,7 @@ export default function Reservar() {
             </div>
 
 
-            <div className="flex flex-col gap-3 mb-6 bg-[#0d0d0d] p-3 rounded-lg border border-[#2a2a2a]">
+            <div className="flex flex-col gap-3 mb-6 bg-slate-100 p-3 rounded-lg border border-slate-200">
               <label className="text-xs font-semibold text-textSec uppercase">Jugador/es Rivales (opcional)</label>
               
               <SearchableSelect
@@ -981,7 +981,7 @@ export default function Reservar() {
 
       {/* Modal Detalle (Turno Ocupado/Bloqueado) */}
       {infoTurno && (
-        <div className="fixed inset-0 bg-[#0d0d0d]/80 z-50 flex items-start justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-start justify-center p-4 overflow-y-auto">
           <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm my-auto text-center overflow-visible">
             {(() => {
               const isMio = infoTurno.socio_dni === socio?.dni;
@@ -993,12 +993,12 @@ export default function Reservar() {
             {infoTurno.estado === 'bloqueado' ? (
               <p className="text-blocked text-lg font-semibold bg-blocked/10 p-4 rounded-lg">{infoTurno.motivo_bloqueo || 'Bloqueado por Mantenimiento'}</p>
             ) : (
-              <div className="bg-[#0d0d0d] rounded-lg p-4 border border-[#2a2a2a] text-left">
+              <div className="bg-slate-100 rounded-lg p-4 border border-slate-200 text-left">
                 <p className="text-xs font-bold text-textSec mb-1 uppercase">Titular de la Reserva</p>
                 <p className="text-lg text-primary">{infoTurno.socios.apellido}, {infoTurno.socios.nombre}</p>
                 
                 {infoTurno.acompanante && (
-                  <div className="mt-4 pt-4 border-t border-[#2a2a2a]">
+                  <div className="mt-4 pt-4 border-t border-slate-200">
                     <p className="text-xs font-bold text-textSec mb-1 uppercase">Jugadores adicionales</p>
                     <p className="text-sm text-textPri">{infoTurno.acompanante}</p>
                   </div>

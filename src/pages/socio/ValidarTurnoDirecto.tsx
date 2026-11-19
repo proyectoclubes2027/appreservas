@@ -164,8 +164,8 @@ export default function ValidarTurnoDirecto() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] text-[#eeeeee] flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#161616] border border-[#2a2a2a] rounded-2xl p-6 sm:p-7 shadow-2xl space-y-6">
+    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-2xl space-y-6">
         
         {/* Encabezado del Club */}
         <div className="flex flex-col items-center text-center space-y-2 border-b border-[#262626] pb-5">

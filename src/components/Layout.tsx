@@ -34,26 +34,26 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <header className="bg-primary text-[#0d0d0d] p-4 flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#0d0d0d] flex items-center justify-center text-sm">
-            🎾
+      <header className="bg-primary text-white p-4 flex items-center justify-between shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-white p-0.5 flex items-center justify-center shadow-sm overflow-hidden shrink-0">
+            <img src="/logo.png" alt="Escudo CARP" className="w-full h-full object-contain" />
           </div>
-          <span className="font-black text-sm tracking-tight text-[#0d0d0d] uppercase">
-            Club Central
+          <span className="font-black text-sm tracking-tight text-white uppercase">
+            CARP Tenis
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleForceUpdate}
             disabled={isUpdating}
-            className="p-2 bg-[#0d0d0d] text-primary rounded-full hover:bg-surface transition-transform active:scale-90"
+            className="p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-transform active:scale-90"
             title="Actualizar a la última versión"
           >
             <RotateCw size={18} className={isUpdating ? 'animate-spin' : ''} />
           </button>
           {socio && (
-            <button onClick={handleSignOut} className="p-2 bg-[#0d0d0d] text-primary rounded-full hover:bg-surface transition-colors" title="Cerrar sesión">
+            <button onClick={handleSignOut} className="p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors" title="Cerrar sesión">
               <LogOut size={20} />
             </button>
           )}

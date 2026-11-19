@@ -88,7 +88,7 @@ export const CancelarTurnoModal: React.FC<CancelarTurnoModalProps> = ({
 
         <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-3.5 text-sm min-h-0">
           {/* Card con datos del turno */}
-          <div className="bg-[#0d0d0d] p-3.5 rounded-xl border border-[#2a2a2a] flex flex-col gap-1.5">
+          <div className="bg-slate-100 p-3.5 rounded-xl border border-slate-200 flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <span className="font-bold text-textPri text-sm capitalize flex items-center gap-1.5">
                 <Calendar size={14} className="text-primary" />
@@ -105,7 +105,7 @@ export const CancelarTurnoModal: React.FC<CancelarTurnoModalProps> = ({
           </div>
 
           {/* Gráfico Semáforo de Cancelación */}
-          <div className="bg-[#0d0d0d] p-3 rounded-xl border border-[#2a2a2a] flex flex-col gap-2">
+          <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 flex flex-col gap-2">
             <div className="flex items-center justify-between text-[11px] font-bold text-textSec uppercase tracking-wider">
               <span>Semáforo de Cancelación</span>
               {evaluacion.categoria !== 'clima' && (
@@ -129,7 +129,7 @@ export const CancelarTurnoModal: React.FC<CancelarTurnoModalProps> = ({
                 <div className={`p-2 rounded-lg border transition-all ${
                   evaluacion.categoria === 'normal'
                     ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 font-bold ring-1 ring-emerald-500/50'
-                    : 'bg-[#141414] border-[#222] text-textSec/60'
+                    : 'bg-slate-50 border-slate-200 text-textSec/60'
                 }`}>
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 mx-auto mb-1" />
                   <span>+2 Horas</span>
@@ -140,7 +140,7 @@ export const CancelarTurnoModal: React.FC<CancelarTurnoModalProps> = ({
                 <div className={`p-2 rounded-lg border transition-all ${
                   evaluacion.categoria === 'tardia'
                     ? 'bg-amber-950/60 border-amber-500 text-amber-300 font-bold ring-1 ring-amber-500/50'
-                    : 'bg-[#141414] border-[#222] text-textSec/60'
+                    : 'bg-slate-50 border-slate-200 text-textSec/60'
                 }`}>
                   <div className="w-2.5 h-2.5 rounded-full bg-amber-400 mx-auto mb-1" />
                   <span>30 min a 2 hs</span>
@@ -151,7 +151,7 @@ export const CancelarTurnoModal: React.FC<CancelarTurnoModalProps> = ({
                 <div className={`p-2 rounded-lg border transition-all ${
                   evaluacion.categoria === 'inmediata'
                     ? 'bg-red-950/60 border-red-500 text-red-300 font-bold ring-1 ring-red-500/50'
-                    : 'bg-[#141414] border-[#222] text-textSec/60'
+                    : 'bg-slate-50 border-slate-200 text-textSec/60'
                 }`}>
                   <div className="w-2.5 h-2.5 rounded-full bg-red-400 mx-auto mb-1" />
                   <span>-30 Minutos</span>

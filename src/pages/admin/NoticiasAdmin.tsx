@@ -99,7 +99,7 @@ export default function NoticiasAdmin() {
         <div>
           <label className="text-xs font-bold text-textSec uppercase mb-1 block">Contenido / Mensaje</label>
           <textarea
-            className="w-full bg-[#0d0d0d] border border-border rounded-md p-3 text-textPri outline-none focus:border-primary min-h-[120px] resize-none"
+            className="w-full bg-slate-100 border border-border rounded-md p-3 text-textPri outline-none focus:border-primary min-h-[120px] resize-none"
             placeholder="Escribe aquí el comunicado que verán los socios..."
             value={contenido}
             onChange={e => setContenido(e.target.value)}
@@ -119,7 +119,7 @@ export default function NoticiasAdmin() {
           <p className="text-center py-10 text-textSec bg-surface rounded-xl border border-border">No hay noticias publicadas.</p>
         ) : (
           noticias.map(n => (
-            <div key={n.id} className={`bg-surface border ${n.activo ? 'border-border' : 'border-dashed border-[#333] opacity-60'} p-4 rounded-xl flex flex-col gap-2`}>
+            <div key={n.id} className={`bg-surface border ${n.activo ? 'border-border' : 'border-dashed border-slate-300 opacity-60'} p-4 rounded-xl flex flex-col gap-2`}>
               <div className="flex justify-between items-start">
                 <div>
                   <div className="flex items-center gap-2">

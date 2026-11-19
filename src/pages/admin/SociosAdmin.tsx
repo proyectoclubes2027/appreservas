@@ -122,7 +122,7 @@ export default function SociosAdmin() {
             className="flex-1"
           />
           <select 
-            className="bg-[#0d0d0d] border border-border rounded-md px-3 text-sm text-textPri outline-none focus:border-primary shrink-0"
+            className="bg-slate-100 border border-border rounded-md px-3 text-sm text-textPri outline-none focus:border-primary shrink-0"
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value as 'todos' | 'activos' | 'inactivos')}
           >
@@ -188,7 +188,7 @@ export default function SociosAdmin() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-[#0d0d0d]/80 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
           <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm">
             <h3 className="text-lg font-bold mb-4">{editingId ? 'Editar Socio' : 'Nuevo Socio'}</h3>
             
@@ -201,7 +201,7 @@ export default function SociosAdmin() {
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-textSec font-semibold uppercase">Rol</label>
                 <select 
-                  className="bg-[#0d0d0d] border border-border rounded-md p-3 text-textPri outline-none focus:border-primary"
+                  className="bg-slate-100 border border-border rounded-md p-3 text-textPri outline-none focus:border-primary"
                   value={formData.rol}
                   onChange={e => setFormData({...formData, rol: e.target.value as 'socio' | 'admin'})}
                 >
